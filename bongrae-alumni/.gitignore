@@ -22,6 +22,7 @@ backups/*.tar.gz
 backups/*.log
 backups/*.dump
 postgres-data/
+.deploy/
 nginx/https-active.conf
 docker-compose.override.yml
 certbot/

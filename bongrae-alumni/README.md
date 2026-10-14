@@ -51,6 +51,13 @@ bongrae-alumni/
 └─ backups/
 ```
 
+## GitHub Push 자동 배포
+
+`main` push 시 GitHub에서 이미지를 빌드하고 기존 Ubuntu 서버에 SSH로 배포하는
+워크플로가 `.github/workflows/deploy.yml`에 있습니다. 최초 서버 설정과 GitHub
+Secret/Variable 등록 절차는 [자동 배포 안내](deploy/README.md)를 확인하세요.
+`DEPLOY_ENABLED=true`로 활성화하기 전에는 배포하지 않습니다.
+
 ## 최초 실행 방법
 
 ```bash

@@ -1,0 +1,81 @@
+name: Deploy Bongrae
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - bongrae-alumni/**
+      - .github/workflows/deploy.yml
+      - .gitattributes
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bongrae-production
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: Test deployment and rollback
+        run: bash bongrae-alumni/deploy/test-deploy.sh
+
+  deploy:
+    needs: validate
+    if: github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      REVISION: ${{ github.sha }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Build backend and frontend
+        working-directory: bongrae-alumni
+        run: |
+          docker build --label "org.opencontainers.image.revision=$REVISION" \
+            --tag "bongrae-alumni-backend:$REVISION" backend
+          docker build --label "org.opencontainers.image.revision=$REVISION" \
+            --tag "bongrae-alumni-frontend:$REVISION" frontend
+
+      - name: Package images
+        run: |
+          mkdir -p "$RUNNER_TEMP/bongrae-release"
+          printf '%s\n' "$REVISION" > "$RUNNER_TEMP/bongrae-release/revision"
+          docker image save "bongrae-alumni-backend:$REVISION" \
+            "bongrae-alumni-frontend:$REVISION" \
+            | gzip -1 > "$RUNNER_TEMP/bongrae-release/images.tar.gz"
+          tar -cf "$RUNNER_TEMP/bongrae-release.tar" \
+            -C "$RUNNER_TEMP/bongrae-release" revision images.tar.gz
+
+      - name: Deploy over SSH
+        env:
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST || '1.201.112.33' }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_SSH_KEY" || { echo 'DEPLOY_SSH_KEY is missing'; exit 1; }
+          test -n "$DEPLOY_KNOWN_HOSTS" || { echo 'DEPLOY_KNOWN_HOSTS is missing'; exit 1; }
+          umask 077
+          ssh_dir="$(mktemp -d "$RUNNER_TEMP/bongrae-ssh.XXXXXX")"
+          trap 'rm -f "$ssh_dir/key" "$ssh_dir/known_hosts"; rmdir "$ssh_dir"' EXIT
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$ssh_dir/key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          ssh -T -p 22 -i "$ssh_dir/key" \
+            -o BatchMode=yes -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o "UserKnownHostsFile=$ssh_dir/known_hosts" \
+            -o ConnectTimeout=20 -o ServerAliveInterval=30 \
+            "ubuntu@$DEPLOY_HOST" < "$RUNNER_TEMP/bongrae-release.tar"
