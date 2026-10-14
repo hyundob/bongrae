@@ -78,6 +78,22 @@ test("school source details expand and collapse", async ({ page }) => {
   }
 });
 
+test("school symbols render without requests to the school image server", async ({ page }) => {
+  const externalImages: string[] = [];
+  await page.route("https://bongnae.es.jne.kr/**", route => {
+    externalImages.push(route.request().url());
+    return route.abort();
+  });
+  await page.goto("/school/symbols");
+  const images = page.locator(".symbol-card-img img");
+  await expect(images).toHaveCount(3);
+  for (const img of await images.all()) {
+    await img.scrollIntoViewIfNeeded();
+    await expect.poll(() => img.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth > 0)).toBe(true);
+  }
+  expect(externalImages).toEqual([]);
+});
+
 test("introduction pages also fit a compact 320px viewport", async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 740 });
   for (const path of ["/about/greeting", "/about/executives", "/about/rules", "/school/history", "/school/past-principals", "/school/directions"]) {

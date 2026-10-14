@@ -40,6 +40,7 @@
 - 학교 연혁은 시기별 연대표, 회칙은 장별 바로가기, 임원은 직책별 명부로 구성한다. 학교 현황의 긴 역사 자료는 펼침 영역에서 읽는다.
 - 회장 인사말은 사용자가 제공한 초대 회장 원문을 게시한다. 원문의 총동창회 명칭을 보존하며, 총동문회 연혁과 역대 회장 자료는 준비 중이다.
 - 실제 사무실 주소와 후원 계좌는 `site.ts`의 `associationContact`에서 관리하고 공통 푸터에 표시한다. 모교 위치와 회칙의 역사적 원문은 별개로 유지한다.
+- 학교 상징 사진 3개는 외부 서버 응답에 영향을 받지 않도록 `frontend/public/images/school-{camellia,torreya,color}.png`에 포함한다. 기존 화면의 학교 홈페이지 원본을 2026-10-14 그대로 가져왔다: [교화](https://bongnae.es.jne.kr/upload/bongnae_es/ss/img_1a59v3da7=42va3=4bv22=a2v66=97c5vab66v54b9_v6050.png), [교목](https://bongnae.es.jne.kr/upload/bongnae_es/ss/img_4d7evfbc1=7dvcb=41v4f=80vc6=847av7237v96a0_v7363.png), [교색](https://bongnae.es.jne.kr/upload/bongnae_es/ss/img_5df2vde70=4bvc8=4av8e=a0v2a=2d8cvde78v9a62_v2079.png).
 
 ## 권한
 

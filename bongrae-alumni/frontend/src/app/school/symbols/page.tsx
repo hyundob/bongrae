@@ -2,26 +2,24 @@ import Image from "next/image";
 import { ExternalLink, Music2 } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 
-const BASE = "https://bongnae.es.jne.kr";
-
 const symbolItems = [
   {
     name: "교화",
     value: "동백",
     desc: "늘 푸른 기상, 정열과 의지",
-    src: `${BASE}/upload/bongnae_es/ss/img_1a59v3da7=42va3=4bv22=a2v66=97c5vab66v54b9_v6050.png`,
+    src: "/images/school-camellia.png",
   },
   {
     name: "교목",
     value: "비자나무",
     desc: "꿋꿋하고 강한 마음",
-    src: `${BASE}/upload/bongnae_es/ss/img_4d7evfbc1=7dvcb=41v4f=80vc6=847av7237v96a0_v7363.png`,
+    src: "/images/school-torreya.png",
   },
   {
     name: "교색",
     value: "파랑색",
     desc: "하늘과 바다와 같은 큰 꿈",
-    src: `${BASE}/upload/bongnae_es/ss/img_5df2vde70=4bvc8=4av8e=a0v2a=2d8cvde78v9a62_v2079.png`,
+    src: "/images/school-color.png",
   },
 ];
 
