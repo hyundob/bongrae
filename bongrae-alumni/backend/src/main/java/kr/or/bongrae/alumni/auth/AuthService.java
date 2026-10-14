@@ -1,10 +1,9 @@
 package kr.or.bongrae.alumni.auth;
 
-import kr.or.bongrae.alumni.member.AlumniProfile;
-import kr.or.bongrae.alumni.member.AlumniProfileRepository;
-import kr.or.bongrae.alumni.member.MemberRole;
-import kr.or.bongrae.alumni.member.UserAccount;
-import kr.or.bongrae.alumni.member.UserAccountRepository;
+import java.nio.charset.StandardCharsets;
+import java.time.Year;
+import java.util.Locale;
+import kr.or.bongrae.alumni.member.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -13,101 +12,47 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AuthService {
+    public static final String POLICY_VERSION = "2026-10-14";
     private final UserAccountRepository users;
     private final AlumniProfileRepository profiles;
-    private final PasswordEncoder passwordEncoder;
-    private final TokenService tokenService;
-
-    public AuthService(UserAccountRepository users, AlumniProfileRepository profiles,
-                       PasswordEncoder passwordEncoder, TokenService tokenService) {
-        this.users = users;
-        this.profiles = profiles;
-        this.passwordEncoder = passwordEncoder;
-        this.tokenService = tokenService;
+    private final PasswordEncoder passwords;
+    public AuthService(UserAccountRepository users, AlumniProfileRepository profiles, PasswordEncoder passwords) {
+        this.users = users; this.profiles = profiles; this.passwords = passwords;
     }
-
     @Transactional
-    public AuthResponse signup(SignupRequest request) {
-        if (users.existsByUsername(request.username())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 사용 중인 아이디입니다.");
+    public UserAccount signup(SignupRequest request) {
+        if (!request.password().equals(request.passwordConfirm())) badRequest("비밀번호 확인이 일치하지 않습니다.");
+        if (request.password().getBytes(StandardCharsets.UTF_8).length > 72) badRequest("비밀번호는 UTF-8 기준 72바이트 이내로 입력해 주세요.");
+        if (!POLICY_VERSION.equals(request.policyVersion())) badRequest("변경된 약관을 확인한 후 다시 동의해 주세요.");
+        if (!request.termsAgreed() || !request.privacyAgreed() || !request.ageConfirmed()) badRequest("필수 동의 항목과 만 14세 이상 여부를 확인해 주세요.");
+        if (request.classNo() > Year.now().getValue() - 1926) badRequest("졸업 기수를 확인해 주세요.");
+        if (request.name().trim().length() < 2) badRequest("이름을 확인해 주세요.");
+        String username = request.username().toLowerCase(Locale.ROOT);
+        String email = request.email().trim().toLowerCase(Locale.ROOT);
+        if (users.findByUsernameIgnoreCase(username).isPresent() || users.existsByEmailIgnoreCase(email)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "이미 사용 중인 아이디 또는 이메일입니다.");
         }
-        if (users.existsByEmail(request.email())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "이미 사용 중인 이메일입니다.");
-        }
-
-        String[] regionParts = splitRegion(request.region());
-        Integer classNo = parseClassNo(request.graduationClass());
-
-        UserAccount user = new UserAccount(
-            request.username(),
-            passwordEncoder.encode(request.password()),
-            request.name(),
-            request.email(),
-            request.phone(),
-            regionParts[0],
-            regionParts[1],
-            classNo,
-            request.termsConsent(),
-            request.privacyConsent(),
-            request.smsConsent(),
-            request.emailConsent()
-        );
-        users.save(user);
-
-        profiles.save(new AlumniProfile(user, request.occupation()));
-
-        return toResponse(user);
+        UserAccount user = new UserAccount(username, passwords.encode(request.password()), request.name().trim(),
+            email, request.phone().replace("-", ""), trim(request.regionProvince()), trim(request.regionCity()),
+            request.classNo(), true, true, request.smsAgreed(), request.emailAgreed());
+        user.completeSignup(POLICY_VERSION);
+        users.saveAndFlush(user);
+        var profile = new AlumniProfile(user);
+        profile.setPublicProfile(request.directoryAgreed());
+        profiles.save(profile);
+        return user;
     }
-
     @Transactional(readOnly = true)
-    public AuthResponse login(LoginRequest request) {
-        UserAccount user = users.findByUsername(request.username())
-            .filter(UserAccount::isEnabled)
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 정보가 올바르지 않습니다."));
-
-        if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "로그인 정보가 올바르지 않습니다.");
-        }
-
-        return toResponse(user);
+    public UserAccount login(LoginRequest request) {
+        UserAccount user = users.findByUsernameIgnoreCase(request.username().trim())
+            .filter(UserAccount::isEnabled).filter(account -> account.getRole() != MemberRole.GUEST)
+            .orElseThrow(AuthService::unauthorized);
+        if (!passwords.matches(request.password(), user.getPasswordHash())) throw unauthorized();
+        return user;
     }
-
-    private AuthResponse toResponse(UserAccount user) {
-        return new AuthResponse(
-            "Bearer",
-            tokenService.createToken(user),
-            user.getUsername(),
-            user.getName(),
-            user.getRole().name(),
-            user.getRole() == MemberRole.PENDING ? "관리자 승인 대기" : "승인 완료"
-        );
+    public static ResponseStatusException unauthorized() {
+        return new ResponseStatusException(HttpStatus.UNAUTHORIZED, "아이디 또는 비밀번호를 확인해 주세요.");
     }
-
-    private String[] splitRegion(String region) {
-        if (region == null || region.isBlank()) {
-            return new String[] { null, null };
-        }
-
-        String[] parts = region.trim().split("\\s+", 2);
-        String province = parts[0];
-        String city = parts.length > 1 ? parts[1] : null;
-        return new String[] { province, city };
-    }
-
-    private Integer parseClassNo(String graduationClass) {
-        if (graduationClass == null || graduationClass.isBlank()) {
-            return null;
-        }
-
-        String digits = graduationClass.replaceAll("[^0-9]", "");
-        if (digits.isBlank()) {
-            return null;
-        }
-
-        try {
-            return Integer.parseInt(digits);
-        } catch (NumberFormatException exception) {
-            return null;
-        }
-    }
+    private static void badRequest(String message) { throw new ResponseStatusException(HttpStatus.BAD_REQUEST, message); }
+    private static String trim(String value) { return value == null || value.isBlank() ? null : value.trim(); }
 }

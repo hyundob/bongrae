@@ -1,3 +1,7 @@
+import Image from "next/image";
+import { ExternalLink, Music2 } from "lucide-react";
+import { PageShell } from "@/components/PageShell";
+
 const BASE = "https://bongnae.es.jne.kr";
 
 const symbolItems = [
@@ -23,20 +27,19 @@ const symbolItems = [
 
 export default function SchoolSymbolsPage() {
   return (
-    <section className="section">
-      <p className="eyebrow">모교소개</p>
-      <h1>교가 및 상징</h1>
+    <PageShell title="교가 및 상징" group="모교소개" description="봉래의 마음과 꿈을 담은 우리 학교의 상징입니다." introduction>
 
       {/* 교표 */}
       <div className="symbol-emblem-wrap">
         <div className="symbol-emblem-img">
-          <img
-            src={`${BASE}/upload/bongnae_es/ss/img_5844v56ce=7ave5=4bv14=96v34=5fb6v4057vbc29_v3384.png`}
+          <Image
+            src="/images/logo.png" width={180} height={180}
             alt="봉래초등학교 교표"
           />
         </div>
         <div className="symbol-emblem-text">
           <p className="eyebrow">교표</p>
+          <h2>우주를 품은 큰 꿈</h2>
           <p>
             무궁화 꽃잎은 섬세한 아름다움과 완강한 자생력을 의미하며,
             중앙의 원은 우주를 품은 큰 꿈을 의미합니다.
@@ -61,13 +64,13 @@ export default function SchoolSymbolsPage() {
       </div>
 
       {/* 교가 */}
-      <p className="eyebrow" style={{ marginBottom: "14px" }}>교가</p>
+      <div className="intro-section-heading"><h2><Music2 size={22} aria-hidden="true" /> 봉래초등학교 교가</h2><a href="/images/school-song.jpg" target="_blank" rel="noopener noreferrer">악보 크게 보기 <ExternalLink size={15} aria-hidden="true" /></a></div>
       <div className="song-sheet">
-        <img
-          src={`${BASE}/upload/bongnae_es/ss/img_6a42vc273=13va7=4ev53=a6v81=dd5av3889v8210_v7243.png`}
+        <Image
+          src="/images/school-song.jpg" width={992} height={1403} sizes="(max-width: 680px) 100vw, 860px"
           alt="봉래초등학교 교가 악보"
         />
       </div>
-    </section>
+    </PageShell>
   );
 }

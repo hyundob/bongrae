@@ -1,10 +1,31 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
+import { MapPin, ExternalLink, Navigation } from "lucide-react";
+import { PageShell } from "@/components/PageShell";
 
 declare global {
-  interface Window { kakao: any; } // eslint-disable-line @typescript-eslint/no-explicit-any
+  interface Window {
+    kakao?: {
+      maps: {
+        load(callback: () => void): void;
+        LatLng: new (latitude: number, longitude: number) => object;
+        Map: new (element: HTMLElement, options: { center: object; level: number }) => object;
+        Marker: new (options: { position: object }) => { setMap(map: object): void };
+        InfoWindow: new (options: { content: string }) => { open(map: object, marker: object): void };
+        services: {
+          Status: { OK: string };
+          Geocoder: new () => {
+            addressSearch(address: string, callback: (results: { x: string; y: string }[], status: string) => void): void;
+          };
+        };
+      };
+    };
+  }
 }
+
+const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
 
 const busStops = [
   {
@@ -23,25 +44,24 @@ const busStops = [
 
 export default function DirectionsPage() {
   const mapRef = useRef<HTMLDivElement>(null);
-  const [noKey, setNoKey] = useState(false);
+  const [noKey, setNoKey] = useState(!apiKey || apiKey === "YOUR_KAKAO_JS_API_KEY");
 
   useEffect(() => {
-    const apiKey = process.env.NEXT_PUBLIC_KAKAO_MAP_KEY;
     if (!apiKey || apiKey === "YOUR_KAKAO_JS_API_KEY") {
-      setNoKey(true);
       return;
     }
 
     function drawMap() {
       if (!mapRef.current) return;
-      const { maps } = window.kakao;
+      const maps = window.kakao?.maps;
+      if (!maps) return;
 
       // 주소로 좌표 검색 (키워드 검색 시 부산 봉래초 혼동 방지)
       const geocoder = new maps.services.Geocoder();
       geocoder.addressSearch(
         "전라남도 고흥군 봉래면 신금길 7",
-        (result: any[], status: string) => {
-          if (status !== maps.services.Status.OK || !mapRef.current) return;
+        (result, status) => {
+          if (status !== maps.services.Status.OK || !result.length || !mapRef.current) return;
           const coords = new maps.LatLng(
             Number(result[0].y),
             Number(result[0].x)
@@ -66,17 +86,15 @@ export default function DirectionsPage() {
     script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false&libraries=services`;
     script.async = true;
     script.onerror = () => setNoKey(true);
-    script.onload = () => window.kakao.maps.load(drawMap);
+    script.onload = () => window.kakao?.maps.load(drawMap);
     document.head.appendChild(script);
   }, []);
 
-  const kakaoViewLink = "https://map.kakao.com/link/search/봉래초등학교";
-  const kakaoNaviLink = "https://map.kakao.com/link/to/봉래초등학교,34.46833,127.47000";
+  const kakaoViewLink = `https://map.kakao.com/link/search/${encodeURIComponent("전라남도 고흥군 봉래면 신금길 7")}`;
+  const kakaoNaviLink = `https://map.naver.com/p/search/${encodeURIComponent("전라남도 고흥군 봉래면 신금길 7 봉래초등학교")}`;
 
   return (
-    <section className="section">
-      <p className="eyebrow">모교소개</p>
-      <h1>오시는 길</h1>
+    <PageShell title="오시는길" group="모교소개" description="다시 찾는 우리의 배움터. 봉래초등학교로 오시는 길입니다." introduction>
 
       {/* 지도 */}
       <div className="map-wrap">
@@ -88,17 +106,17 @@ export default function DirectionsPage() {
         >
           {noKey && (
             <div className="map-placeholder">
-              <p>카카오 지도 API 키를 설정하면 지도가 표시됩니다.</p>
-              <code>.env.local → NEXT_PUBLIC_KAKAO_MAP_KEY</code>
+              <Image src="/images/school-front.jpg" alt="봉래초등학교 정면" width={1536} height={1152} sizes="(max-width: 680px) 100vw, 920px" />
+              <p><MapPin size={18} aria-hidden="true" /> 전라남도 고흥군 봉래면 신금길 7</p>
             </div>
           )}
         </div>
         <div className="map-actions">
           <a href={kakaoViewLink} target="_blank" rel="noopener noreferrer" className="map-btn">
-            카카오맵에서 보기
+            <ExternalLink size={16} aria-hidden="true" /> 카카오맵
           </a>
           <a href={kakaoNaviLink} target="_blank" rel="noopener noreferrer" className="map-btn map-btn--navi">
-            길 찾기
+            <Navigation size={16} aria-hidden="true" /> 네이버 지도
           </a>
         </div>
       </div>
@@ -115,11 +133,11 @@ export default function DirectionsPage() {
           <dl className="dir-info">
             <div className="dir-info-row">
               <dt>교무실</dt>
-              <dd>061-833-6384</dd>
+              <dd><a href="tel:0618336384">061-833-6384</a></dd>
             </div>
             <div className="dir-info-row">
               <dt>행정실</dt>
-              <dd>061-833-6156</dd>
+              <dd><a href="tel:0618336156">061-833-6156</a></dd>
             </div>
             <div className="dir-info-row">
               <dt>팩스</dt>
@@ -157,6 +175,6 @@ export default function DirectionsPage() {
           </p>
         </div>
       </div>
-    </section>
+    </PageShell>
   );
 }

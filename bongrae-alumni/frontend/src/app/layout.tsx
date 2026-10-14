@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { AuthProvider } from "@/components/AuthProvider";
 import "./globals.css";
+import "./member.css";
+import "./introduction.css";
 
 export const metadata: Metadata = {
   title: "봉래초등학교 총동문회",
@@ -12,9 +15,11 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="ko">
       <body>
+        <AuthProvider>
         <Header />
         <main>{children}</main>
         <Footer />
+        </AuthProvider>
       </body>
     </html>
   );

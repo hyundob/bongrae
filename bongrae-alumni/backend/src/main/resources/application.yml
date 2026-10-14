@@ -1,6 +1,13 @@
 spring:
   application:
     name: bongrae-alumni-backend
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 0
+  session:
+    timeout: 12h
+    jdbc:
+      initialize-schema: never
 
 management:
   endpoints:
@@ -12,8 +19,17 @@ management:
       probes:
         enabled: true
 
+server:
+  servlet:
+    session:
+      cookie:
+        http-only: true
+        same-site: lax
+
 app:
-  jwt:
-    secret: ${JWT_SECRET:change_this_jwt_secret}
+  bootstrap:
+    username: ${BOOTSTRAP_ADMIN_USERNAME:}
+    password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+    email: ${BOOTSTRAP_ADMIN_EMAIL:}
   upload:
     path: ${FILE_UPLOAD_PATH:/app/uploads}

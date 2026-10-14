@@ -97,7 +97,7 @@ docker compose -f docker-compose.dev.yml up -d
 
 - 통합 개발 사이트(Nginx): `http://localhost:8088/`
 - 프론트 직접 접속(Next dev): `http://localhost:3001/`
-- 백엔드 직접 접속: `http://localhost:8080/api/health`
+- 백엔드 직접 접속: `http://localhost:18080/api/health` (DEV_BACKEND_PORT로 변경 가능)
 - PostgreSQL 로컬 접속: `localhost:5433`
 
 개발용 특징:
@@ -130,13 +130,15 @@ POSTGRES_DB=alumni_db
 POSTGRES_USER=alumni_user
 POSTGRES_PASSWORD=change_this_password
 SPRING_PROFILES_ACTIVE=prod
-JWT_SECRET=change_this_jwt_secret
+BOOTSTRAP_ADMIN_USERNAME=
+BOOTSTRAP_ADMIN_PASSWORD=
+BOOTSTRAP_ADMIN_EMAIL=
 DOMAIN=localhost
 TZ=Asia/Seoul
 FILE_UPLOAD_PATH=/app/uploads
 ```
 
-실제 운영 비밀번호, JWT secret, 관리자 초기 비밀번호는 코드에 하드코딩하지 말고 `.env` 또는 별도 secret 관리 도구에서만 관리합니다.
+실제 DB 비밀번호와 관리자 초기 비밀번호는 `.env` 또는 별도 secret 관리 도구에서만 관리합니다. 인증은 JWT가 아닌 HttpOnly 세션 쿠키를 사용합니다.
 
 ## Docker Compose 명령어
 
@@ -208,7 +210,7 @@ Nginx 컨테이너 재생성 중 잠시 연결이 끊길 수 있습니다. 인�
 2. Docker Engine과 Docker Compose Plugin 설치
 3. 프로젝트 업로드 또는 Git clone
 4. `.env.example`을 `.env`로 복사
-5. DB 비밀번호와 `JWT_SECRET` 변경
+5. DB 비밀번호 변경 및 총괄 관리자 초기화 환경변수 설정
 6. `docker compose up -d --build`
 7. `docker compose ps`와 `docker compose logs -f`로 상태 확인
 8. 도메인 DNS 연결
@@ -271,17 +273,17 @@ crontab 예시:
 - `events`
 - `audit_logs`
 
-현재 Spring Boot는 회원가입/로그인에 필요한 `users`, `alumni_profiles`를 JPA로 자동 생성합니다. 전체 설계 SQL은 운영 전 Flyway 또는 Liquibase로 편입하는 것을 권장합니다.
+위 목록은 초기 SQL 설계 초안입니다. 실제 DB는 `backend/src/main/resources/db/migration/`의 Flyway로 관리하며 Hibernate는 `validate`만 수행합니다. 현재 테이블과 API는 [구조 문서](../docs/architecture.md), 이번 전환 절차는 [회원·게시판 운영 안내](../docs/member-release.md)를 확인하세요.
 
 ## 보안 설계
 
 - `.env`, uploads 런타임 파일, 백업 산출물은 git에 올리지 않습니다.
 - PostgreSQL 포트는 외부에 공개하지 않습니다.
 - 비밀번호는 BCrypt로 암호화합니다.
-- 회원가입 직후 권한은 `PENDING_USER`입니다.
-- 관리자가 승인하면 `ALUMNI_MEMBER` 이상으로 전환하는 구조입니다.
-- 동문 검색은 `ALUMNI_MEMBER`, `CLASS_MANAGER`, `ADMIN` 접근 구조로 분리했습니다.
-- 관리자 API는 `ADMIN` 권한만 접근하도록 보안 경로를 분리했습니다.
+- 회원가입 직후 `MEMBER`이며 별도 승인 없이 검색과 자유게시판을 이용할 수 있습니다.
+- 기존 `PENDING` 계정도 로그인 회원으로 이용합니다. `GUEST`는 로그인 대상이 아닙니다.
+- 동문 검색은 로그인 회원 전용이며 공개 동의가 있는 이름·기수·졸업연도·가입 상태만 표시합니다.
+- 게시물/명부 관리는 `ADMIN`, `SUPER_ADMIN`이며 관리자 권한 지정은 `SUPER_ADMIN` 1명만 가능합니다.
 - 동문명부 원본 데이터는 공개 페이지에 직접 노출하지 않습니다.
 - DB에는 공개 가능 정보와 비공개 정보를 구분할 수 있도록 `public_profile`, `public_access` 계열 필드를 둡니다.
 
@@ -299,15 +301,14 @@ crontab 예시:
 
 ## 운영 전 점검 체크리스트
 
-- `.env` 비밀번호와 `JWT_SECRET` 변경
+- `.env` DB 비밀번호와 총괄 관리자 초기화 값 확인
 - `docker compose config` 유효성 확인
 - `docker compose ps`에서 health 상태 확인
 - `/api/health`가 Nginx를 통해 정상 응답하는지 확인
 - `/uploads/`가 backend와 Nginx에서 같은 폴더를 바라보는지 확인
 - 실제 도메인 확정 후 `nginx/default.conf`의 `server_name` 변경
 - HTTPS 인증서 적용
-- `spring.jpa.hibernate.ddl-auto`를 `validate`로 변경
-- Flyway 또는 Liquibase 마이그레이션 적용
-- 관리자 초기 계정 생성 절차 분리
+- `ddl-auto: validate` 유지 및 Flyway 전환 로그 확인
+- [총괄 관리자 초기화와 운영 필수 확인](../docs/member-release.md)
 - 개인정보처리방침과 이용약관 문안 검수
 - 동문명부 원본 업로드 전 공개/비공개 필드 검수

@@ -9,10 +9,40 @@ export type MenuGroup = {
   items: MenuItem[];
 };
 
+export const associationContact = {
+  postalCode: "59569",
+  officeAddress: "전남 고흥군 봉래면 나로도항길 94-16, 나로문화관 2층",
+  donation: {
+    bank: "수협",
+    accountNumber: "2010-1058-7374",
+    accountHolder: "봉래초등학교총동문회",
+  },
+};
+
+// 사용자 제공 초대 회장 인사말. 원문의 명칭을 유지하고 문단만 나누었다.
+export const presidentGreeting = {
+  title: "봉래초등학교 총동창회 초대 회장 인사말",
+  headline: "100년의 자랑스러운 역사를 딛고, 함께 미래 100년을 열어갑니다.",
+  paragraphs: [
+    "존경하고 사랑하는 봉래초등학교 동문 여러분, 안녕하십니까. 봉래초등학교 총동창회 초대 회장 신판로입니다.",
+    "우리 모교는 1924년 8월 15일 봉래공립보통학교로 인가를 받아 같은 해 9월 10일 첫 발을 내디딘 이래, 수많은 인재를 배출하며 자랑스러운 배움의 터전으로 굳건히 자리해 왔습니다.",
+    "지난 100주년 기념사업을 추진할 당시, 구심점이 될 동문회가 결성되어 있지 않아 막막하고 어려운 순간들도 많았습니다. 그러나 전국 각지에서 보내주신 동문 여러분의 뜨거운 애정과 정성 어린 후원, 그리고 모교를 향한 열정이 모여 마침내 감격스러운 개교 100주년 기념행사를 성공적으로 치러낼 수 있었습니다. 다시 한번 머리 숙여 깊은 감사의 말씀을 올립니다.",
+    "그 벅찬 감동과 자신감을 바탕으로, 우리는 마침내 모든 동문들의 오랜 염원이었던 ‘봉래초등학교 총동창회’를 창립하게 되었습니다.",
+    "동문 여러분,",
+    "현재 농어촌 인구 감소와 고령화로 인해 봉래면의 여러 학교와 분교들이 통폐합되고 모교의 학생 수도 줄어드는 안타까운 현실을 마주하고 있습니다. 하지만 우리 봉래의 아이들이 교정에서 마음껏 뛰어놀고 밝은 웃음을 이어갈 수 있도록, 이제는 홀로가 아닌 우리 1만여 동문이 함께 손을 맞잡아야 할 때입니다. 우리가 힘을 모은다면 봉래초등학교의 미래는 결코 어둡지 않으며, 더 밝고 찬란하게 빛날 것입니다.",
+    "봉래초등학교 총동창회는 선후배 간 따뜻한 정을 나누는 사랑방이자, 모교의 지속 가능한 발전을 뒷받침하는 든든한 버팀목이 될 것입니다. 서로의 안부를 묻고 못다 한 이야기보따리를 풀며, 언제든 고향과 모교의 품을 느낄 수 있는 공간으로 가꾸어 가겠습니다.",
+    "총동창회의 첫걸음에 동문 여러분의 지속적인 관심과 참여를 부탁드립니다. 여러분 모두의 가정에 늘 건강과 행복, 행운이 가득하시기를 진심으로 기원합니다.",
+    "감사합니다.",
+  ],
+  signerTitle: "봉래초등학교 총동창회 초대 회장",
+  signerName: "신판로",
+  closing: "배상",
+};
+
 export const menuGroups: MenuGroup[] = [
   {
     title: "총동문회 소개",
-    href: "/about",
+    href: "/about/greeting",
     items: [
       { title: "총동문회장 대표 인사말", href: "/about/greeting" },
       { title: "총동문회 연혁", href: "/about/history" },
@@ -23,7 +53,7 @@ export const menuGroups: MenuGroup[] = [
   },
   {
     title: "모교소개",
-    href: "/school",
+    href: "/school/history",
     items: [
       { title: "학교 연혁", href: "/school/history" },
       { title: "학교 현황", href: "/school/overview" },
@@ -48,7 +78,7 @@ export const menuGroups: MenuGroup[] = [
   },
   {
     title: "알림마당",
-    href: "/notice",
+    href: "/notice/announcements",
     items: [
       { title: "공지사항", href: "/notice/announcements" },
       { title: "행사 안내", href: "/notice/events" },
@@ -66,8 +96,8 @@ export const menuGroups: MenuGroup[] = [
 ];
 
 export const quickLinks = [
-  { title: "총동문회 소개", href: "/about", text: "회칙, 목적, 임원 구성과 운영 방향" },
-  { title: "모교소개", href: "/school", text: "학교 현황, 상징, 교가와 사진 자료" },
+  { title: "총동문회 소개", href: "/about/greeting", text: "회칙, 목적, 임원 구성과 운영 방향" },
+  { title: "모교소개", href: "/school/history", text: "학교 현황, 상징, 교가와 사진 자료" },
   { title: "장학사업", href: "/scholarship", text: "장학사업 추진 현황" },
   { title: "봉래人", href: "/alumni/search", text: "회원 전용 동문 검색" },
   { title: "알림마당", href: "/notice/announcements", text: "공지사항, 행사안내, 회무 추진" },

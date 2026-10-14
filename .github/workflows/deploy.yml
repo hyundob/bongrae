@@ -3,10 +3,6 @@ name: Deploy Bongrae
 on:
   push:
     branches: [main]
-    paths:
-      - bongrae-alumni/**
-      - .github/workflows/deploy.yml
-      - .gitattributes
   workflow_dispatch:
 
 permissions:
@@ -18,15 +14,7 @@ concurrency:
 
 jobs:
   validate:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 5
-    steps:
-      - name: Check out source
-        uses: actions/checkout@v6
-        with:
-          persist-credentials: false
-      - name: Test deployment and rollback
-        run: bash bongrae-alumni/deploy/test-deploy.sh
+    uses: ./.github/workflows/verify.yml
 
   deploy:
     needs: validate

@@ -36,7 +36,9 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-alumni_db}
       POSTGRES_USER: ${POSTGRES_USER:-alumni_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_this_password}
-      JWT_SECRET: ${JWT_SECRET:-change_this_jwt_secret}
+      BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-}
       FILE_UPLOAD_PATH: ${FILE_UPLOAD_PATH:-/app/uploads}
       JAVA_OPTS: -Xms512m -Xmx1024m
       TZ: ${TZ:-Asia/Seoul}

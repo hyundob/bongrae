@@ -12,6 +12,8 @@ out/
 backend/build/
 *.tsbuildinfo
 *.log
+playwright-report/
+test-results/
 
 # Runtime data
 uploads/*

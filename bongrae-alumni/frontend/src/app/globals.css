@@ -925,7 +925,7 @@ p {
   flex: 0 0 130px;
   font-size: 0.92rem;
   font-weight: 800;
-  letter-spacing: 0.01em;
+  letter-spacing: 0;
   margin-left: -130px;
   white-space: nowrap;
 }
@@ -969,7 +969,7 @@ p {
   color: var(--nav);
   font-size: 0.88rem;
   font-weight: 800;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
   margin-bottom: 10px !important;
 }
 

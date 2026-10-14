@@ -96,15 +96,11 @@ public class ContentController {
     @GetMapping("/boards")
     public List<Map<String, String>> boards() {
         return List.of(
-            Map.of("name", "공지사항", "type", "notice", "access", "PUBLIC"),
-            Map.of("name", "행사안내", "type", "event", "access", "PUBLIC"),
-            Map.of("name", "행사 사진·영상", "type", "gallery", "access", "MEMBER"),
-            Map.of("name", "회의자료", "type", "meeting", "access", "CLASS_MANAGER"),
-            Map.of("name", "자유게시판", "type", "free", "access", "MEMBER"),
-            Map.of("name", "동문 동정", "type", "news", "access", "MEMBER"),
-            Map.of("name", "애경사", "type", "family", "access", "MEMBER"),
-            Map.of("name", "개업/이전/사업홍보", "type", "promotion", "access", "MEMBER"),
-            Map.of("name", "장학/후원", "type", "support", "access", "PUBLIC")
+            Map.of("name", "공지사항", "type", "announcements", "access", "PUBLIC", "writeAccess", "ADMIN"),
+            Map.of("name", "행사 안내", "type", "events", "access", "PUBLIC", "writeAccess", "ADMIN"),
+            Map.of("name", "행사 사진 및 영상", "type", "gallery", "access", "PUBLIC", "writeAccess", "ADMIN"),
+            Map.of("name", "주요 회무 추진", "type", "affairs", "access", "PUBLIC", "writeAccess", "ADMIN"),
+            Map.of("name", "자유게시판", "type", "free", "access", "PUBLIC", "writeAccess", "MEMBER")
         );
     }
 }

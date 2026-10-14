@@ -1,0 +1,11 @@
+spring:
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  sql:
+    init:
+      mode: never
+app:
+  upload:
+    path: ${java.io.tmpdir}/bongrae-harness-uploads

@@ -39,6 +39,7 @@ public class AlumniProfile {
 
     @Column
     private LocalDateTime updatedAt;
+    private LocalDateTime directoryConsentAt;
 
     protected AlumniProfile() {
     }
@@ -61,4 +62,9 @@ public class AlumniProfile {
     public String getOccupation() { return occupation; }
     public boolean isPublicProfile() { return publicProfile; }
     public String getMemo() { return memo; }
+    public void setPublicProfile(boolean value) {
+        publicProfile = value;
+        directoryConsentAt = value ? LocalDateTime.now() : null;
+        updatedAt = LocalDateTime.now();
+    }
 }

@@ -84,6 +84,15 @@ public class UserAccount {
     @Column
     private LocalDateTime updatedAt;
 
+    @Column(length = 30)
+    private String termsVersion;
+    @Column(length = 30)
+    private String privacyVersion;
+    private LocalDateTime consentedAt;
+    private LocalDateTime preferencesUpdatedAt;
+    @Column(nullable = false)
+    private boolean ageConfirmed;
+
     protected UserAccount() {
     }
 
@@ -122,6 +131,23 @@ public class UserAccount {
     }
 
     public Long getId() { return id; }
+    public void completeSignup(String policyVersion) {
+        role = MemberRole.MEMBER;
+        ageConfirmed = true;
+        termsVersion = policyVersion;
+        privacyVersion = policyVersion;
+        consentedAt = LocalDateTime.now();
+        preferencesUpdatedAt = consentedAt;
+    }
+    public void changeRole(MemberRole role) {
+        this.role = role;
+        updatedAt = LocalDateTime.now();
+    }
+    public void updatePreferences(boolean sms, boolean email) {
+        smsAgreed = sms;
+        emailAgreed = email;
+        preferencesUpdatedAt = LocalDateTime.now();
+    }
     public String getUsername() { return username; }
     public String getPasswordHash() { return passwordHash; }
     public String getName() { return name; }
@@ -140,4 +166,6 @@ public class UserAccount {
     public LocalDateTime getApprovedAt() { return approvedAt; }
     public boolean isEnabled() { return enabled; }
     public LocalDateTime getCreatedAt() { return createdAt; }
+    public String getTermsVersion() { return termsVersion; }
+    public String getPrivacyVersion() { return privacyVersion; }
 }

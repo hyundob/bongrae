@@ -1,3 +1,6 @@
+import { PageShell } from "@/components/PageShell";
+import { SchoolPhoto } from "@/components/Introduction";
+
 const nameHistory = [
   { date: "1924. 9. 10", name: "봉래공립보통학교",         type: "개교" },
   { date: "1938. 4. 1",  name: "봉래공립심상소학교",        type: "개칭" },
@@ -23,12 +26,13 @@ const tfMembers = [
 
 export default function SchoolOverviewPage() {
   return (
-    <section className="section">
-      <p className="eyebrow">모교소개</p>
-      <h1>학교 현황</h1>
+    <PageShell title="학교 현황" group="모교소개" description="나로도에서 꿈을 키우는 배움터, 봉래초등학교입니다." introduction>
+      <SchoolPhoto />
+      <p className="intro-source-note">학교 현황은 제공된 2026년 자료 기준입니다.</p>
+      <nav className="chapter-links" aria-label="학교 현황 목차"><a href="#school-info">기본 현황</a><a href="#students">재학생</a><a href="#staff">교직원</a><a href="#facilities">시설</a></nav>
 
       {/* ── 기본 현황 ── */}
-      <h2 className="overview-section-title">기본 현황</h2>
+      <h2 id="school-info" className="overview-section-title">기본 현황</h2>
       <div className="overview-info-grid">
         <div className="info-row">
           <span className="info-label">학교명</span>
@@ -53,7 +57,7 @@ export default function SchoolOverviewPage() {
       </div>
 
       {/* ── 재학생 현황 ── */}
-      <h2 className="overview-section-title">재학생 현황 <span className="section-sub">(2026년 기준)</span></h2>
+      <h2 id="students" className="overview-section-title">재학생 현황 <span className="section-sub">(2026년 기준)</span></h2>
       <div className="overview-stats">
         <div className="stat-card stat-card--accent">
           <span className="stat-label">초등 전체</span>
@@ -94,7 +98,7 @@ export default function SchoolOverviewPage() {
       </div>
 
       {/* ── 교직원 현황 ── */}
-      <h2 className="overview-section-title">교직원 현황</h2>
+      <h2 id="staff" className="overview-section-title">교직원 현황</h2>
       <div className="overview-stats overview-stats--small">
         <div className="stat-card">
           <span className="stat-label">교장</span>
@@ -119,7 +123,7 @@ export default function SchoolOverviewPage() {
       </div>
 
       {/* ── 시설 현황 ── */}
-      <h2 className="overview-section-title">시설 현황</h2>
+      <h2 id="facilities" className="overview-section-title">시설 현황</h2>
       <div className="overview-info-grid">
         <div className="info-row">
           <span className="info-label">운동장</span>
@@ -136,6 +140,8 @@ export default function SchoolOverviewPage() {
       </div>
 
       {/* ── 학교 설립 동기 ── */}
+      <details className="school-record-details">
+      <summary>학교의 시작과 교명의 변천</summary>
       <h2 className="overview-section-title">학교 설립 동기</h2>
       <div className="overview-prose">
         <p>
@@ -187,6 +193,9 @@ export default function SchoolOverviewPage() {
       </div>
 
       {/* ── 교가 변경 과정 ── */}
+      </details>
+      <details className="school-record-details">
+      <summary>새 교가가 만들어지기까지</summary>
       <h2 className="overview-section-title">교가 변경 과정</h2>
 
       <div className="overview-prose">
@@ -208,7 +217,7 @@ export default function SchoolOverviewPage() {
       <div className="overview-prose">
         <p className="prose-label">1차 컨설팅 주요 내용</p>
         <ul className="overview-list">
-          <li>기존 교가 중 '청아한 학도야' 가사는 현시대 초등학생에게 적합하지 않아 전체 교가 변경 필요</li>
+          <li>기존 교가 중 &apos;청아한 학도야&apos; 가사는 현시대 초등학생에게 적합하지 않아 전체 교가 변경 필요</li>
           <li>미래 지향적인 가사로 새롭게 정립 필요</li>
           <li>학생들이 기억하기 쉬운 어휘와 문장으로 작사 필요</li>
           <li>학교 교육 목표와 의미를 포함할 것</li>
@@ -250,6 +259,7 @@ export default function SchoolOverviewPage() {
           <li><time>2020. 10. 14</time> — 최종 작곡 결정</li>
         </ul>
       </div>
-    </section>
+      </details>
+    </PageShell>
   );
 }

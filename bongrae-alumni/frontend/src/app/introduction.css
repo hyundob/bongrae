@@ -1,0 +1,296 @@
+.nav-item > a[aria-current="location"] {
+  background: var(--nav-dark);
+  box-shadow: inset 0 -3px #b9d9bf;
+}
+.introduction-page {
+  grid-template-columns: 214px minmax(0, 1fr);
+  gap: 48px;
+  padding-top: 40px;
+  padding-bottom: 80px;
+  color: #28342f;
+}
+.introduction-page .section-nav {
+  align-self: start;
+  position: sticky;
+  top: 28px;
+}
+.introduction-page .section-nav strong {
+  color: #fff;
+  background: var(--nav);
+  padding: 30px 20px;
+  border: 0;
+  font-size: 23px;
+}
+.introduction-page .section-nav a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 19px 14px;
+  line-height: 1.5;
+  font-size: 14px;
+  color: #505e55;
+}
+.introduction-page .section-nav a svg { flex-shrink: 0; color: #87968c; }
+.introduction-page .section-nav a[aria-current="page"] {
+  background: #edf5ef;
+  color: #216146;
+  box-shadow: inset 3px 0 #23724f;
+}
+.introduction-page .section-nav a[aria-current="page"] svg { color: #23724f; }
+.introduction-page .page-heading {
+  padding: 0 0 24px;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #d8e0db;
+}
+.intro-breadcrumbs { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; font-size: 12px; color: #718077; margin-bottom: 20px; line-height: 1.6; }
+.intro-breadcrumbs a { display: inline-flex; align-items: center; }
+.intro-breadcrumbs a:hover { color: var(--nav); text-decoration: underline; }
+.intro-breadcrumbs > svg { flex-shrink: 0; }
+.introduction-page .page-heading h1 { color: #20372c; font-size: 30px; line-height: 1.4; word-break: keep-all; }
+.introduction-page .page-heading .intro-description { margin: 12px 0 0; font-size: 15px; color: #67736c; line-height: 1.7; word-break: keep-all; }
+.intro-school-photo { margin: 0; }
+.intro-school-photo > img { width: 100%; height: 300px; object-fit: cover; object-position: center 58%; }
+.intro-school-photo figcaption { padding-top: 10px; font-size: 12px; color: #6a786f; text-align: right; line-height: 1.5; }
+.intro-kicker { display: block; color: var(--leaf); font-size: 13px; font-weight: 700; line-height: 1.6; }
+.president-letter {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 38px 0 12px;
+}
+.president-letter-heading {
+  border-bottom: 1px solid #dce5df;
+  padding-bottom: 26px;
+  margin-bottom: 30px;
+}
+.president-letter-heading .intro-kicker { margin: 0 0 14px; }
+.president-letter-heading h2 {
+  max-width: 670px;
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.65;
+  color: #28563b;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.president-letter-body p {
+  color: #46554b;
+  font-size: 16px;
+  line-height: 2;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  margin: 0 0 24px;
+}
+.president-letter-body p:first-child { color: #294d37; font-weight: 600; }
+.president-signature {
+  border-top: 1px solid #dce5df;
+  padding-top: 24px;
+  margin: 34px 0 0;
+  text-align: right;
+  color: #627367;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.president-signature span { display: block; margin-bottom: 10px; }
+.president-signature strong { font-size: 25px; color: #2c4d36; margin-right: 8px; }
+.association-intro { display: grid; grid-template-columns: 1fr 1fr; column-gap: 32px; padding: 36px 0; align-items: center; }
+.association-intro .intro-kicker { grid-column: 1/-1; margin-bottom: 12px; }
+.association-intro h2 { margin: 0; font-size: 29px; line-height: 1.6; word-break: keep-all; }
+.association-intro h2 em { color: var(--leaf); font-style: normal; }
+.association-intro > p { color: #627068; line-height: 1.9; font-size: 15px; margin: 0; word-break: keep-all; }
+.archive-pending { display: flex; gap: 20px; align-items: flex-start; padding: 28px 0; border-block: 1px solid #dbe3dd; }
+.archive-pending > svg { flex-shrink: 0; color: #74937f; margin-top: 5px; }
+.archive-pending .intro-kicker { color: #78847c; font-size: 12px; }
+.archive-pending h2 { margin: 5px 0 8px; font-size: 19px; word-break: keep-all; }
+.archive-pending p { color: #68756c; line-height: 1.8; font-size: 14px; margin: 0; word-break: keep-all; }
+.intro-school-photo + .archive-pending { margin-top: 30px; }
+.association-values { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 32px 0; }
+.association-values article { padding: 0 22px; border-left: 1px solid #e1e7e3; }
+.association-values article:first-child { padding-left: 0; border-left: 0; }
+.association-values article > svg { color: var(--leaf); width: 26px; height: 26px; }
+.association-values article:nth-child(2) > svg { color: var(--nav); }
+.association-values article:nth-child(3) > svg { color: var(--camellia); }
+.association-values h3 { font-size: 17px; margin: 14px 0 8px; }
+.association-values p { font-size: 13px; color: #6c786f; line-height: 1.7; margin: 0; word-break: keep-all; }
+.intro-next { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 23px 0; border-block: 1px solid #dce4de; margin-top: 36px; }
+.intro-next small { display: block; color: #758179; font-size: 12px; margin-bottom: 7px; }
+.intro-next strong { font-size: 19px; font-weight: 600; line-height: 1.5; }
+.intro-next > svg { flex-shrink: 0; color: var(--leaf); transition: transform 160ms ease; }
+.intro-next:hover strong { color: var(--leaf); }
+.intro-next:hover > svg { transform: translate(3px, -3px); }
+.archive-heading, .roster-heading { padding: 10px 0 30px; }
+.archive-heading h2, .roster-heading p { font-size: 27px; line-height: 1.65; margin: 14px 0 0; font-weight: 500; }
+.roster-heading strong { color: var(--leaf); }
+.executive-roster { border-top: 2px solid #346d51; }
+.executive-group { display: grid; grid-template-columns: 130px minmax(0, 1fr); border-bottom: 1px solid #dce5df; padding: 26px 0; gap: 24px; }
+.executive-group h2 { margin: 3px 0 0; font-size: 16px; font-weight: 600; color: #5d7063; }
+.executive-group ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 20px; }
+.executive-person { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px; }
+.executive-person strong { font-size: 19px; font-weight: 600; }
+.executive-person span { font-size: 13px; color: #728178; white-space: nowrap; }
+.executive-group:first-child { padding: 29px 0; }
+.executive-group:first-child .executive-person strong { font-size: 25px; color: var(--leaf); }
+.intro-source-note { margin: 16px 0 24px; color: #748077; font-size: 12px; line-height: 1.7; }
+.heritage-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 26px 0; margin: 0 0 15px; border-bottom: 1px solid #dbe4de; }
+.heritage-facts > div { padding-left: 25px; border-left: 1px solid #dbe4de; }
+.heritage-facts > div:first-child { padding-left: 0; border-left: 0; }
+.heritage-facts dt { color: #6c7870; font-size: 12px; line-height: 1.7; min-height: 21px; }
+.heritage-facts dd { margin: 7px 0 0; font-size: 34px; font-weight: 700; color: var(--leaf); font-variant-numeric: tabular-nums; }
+.heritage-facts > div:nth-child(2) dd { color: var(--nav); }
+.heritage-facts > div:nth-child(3) dd { color: #a53f49; }
+.heritage-facts dd span { font-size: 14px; margin-left: 6px; font-weight: 400; color: #6c7870; }
+.chapter-links { display: flex; flex-wrap: wrap; gap: 8px 26px; border-bottom: 1px solid #d8e2dc; padding: 14px 0; margin-bottom: 30px; }
+.chapter-links a { color: #42614d; font-size: 14px; line-height: 1.8; text-decoration: underline; text-underline-offset: 5px; padding-block: 5px; }
+.chapter-links a:hover { color: var(--nav); }
+.chronology-era { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 24px; padding: 16px 0 32px; scroll-margin-top: 24px; }
+.era-heading > span { color: var(--leaf); font-size: 23px; font-weight: 700; }
+.era-heading h2 { font-size: 14px; color: #738178; font-weight: 400; margin-top: 10px; }
+.chronology-era ol { list-style: none; margin: 0; padding: 0 0 0 25px; border-left: 1px solid #d4e0d7; }
+.chronology-entry { padding-bottom: 28px; position: relative; }
+.chronology-entry:before { content: ""; position: absolute; left: -30px; top: 5px; width: 9px; height: 9px; border: 2px solid var(--leaf); border-radius: 50%; background: white; }
+.chronology-entry:last-child { padding-bottom: 4px; }
+.chronology-entry time { font-size: 14px; font-weight: 700; color: var(--nav); }
+.chronology-entry p { font-size: 15px; line-height: 1.75; margin: 8px 0 0; word-break: keep-all; }
+.rules-intro { display: flex; justify-content: space-between; gap: 15px; align-items: baseline; }
+.rules-intro p { margin: 0; font-size: 13px; color: #768378; }
+.introduction-page .rules-chapter { margin-bottom: 40px; scroll-margin-top: 24px; }
+.introduction-page .rules-chapter-title { border: 0; background: #f0f5f1; color: #31583f; font-size: 19px; padding: 16px 20px; margin: 0 0 12px; }
+.introduction-page .rule-article { border: 0; border-bottom: 1px solid #edf0ed; padding: 20px 0; margin: 0; }
+.introduction-page .rule-no { color: #344f3e; font-size: 16px; margin: 0 0 10px; }
+.introduction-page .rule-body { color: #505e54; font-size: 15px; line-height: 1.95; margin: 0; }
+.introduction-page .overview-section-title { border-color: #cfdcd3; color: #2a4735; margin-top: 36px; font-size: 20px; padding-bottom: 14px; scroll-margin-top: 24px; }
+.introduction-page .overview-info-grid { border: 0; box-shadow: none; }
+.introduction-page .info-row { padding: 16px 0; grid-template-columns: 120px minmax(0, 1fr); font-size: 15px; line-height: 1.7; }
+.introduction-page .overview-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; border-bottom: 1px solid #dce5df; }
+.introduction-page .stat-card { border: 0; border-bottom: 1px solid #e8ede9; box-shadow: none; padding: 22px 16px; background: #f7f9f7; }
+.introduction-page .stat-card--accent { background: #edf4ee; }
+.introduction-page .stat-value { color: var(--leaf); font-size: 23px; }
+.school-record-details { border-block-end: 1px solid #d6e1d9; margin-top: 26px; padding-bottom: 22px; }
+.school-record-details summary { color: #31543c; cursor: pointer; font-size: 18px; font-weight: 600; padding: 12px 0; line-height: 1.7; }
+.school-record-details[open] summary { margin-bottom: 25px; }
+.introduction-page .overview-prose { border: 0; box-shadow: none; padding: 10px 0; font-size: 15px; }
+.introduction-page .song-compare-col { border: 0; box-shadow: none; border-bottom: 1px solid #dce3dc; }
+.introduction-page .principals-table { border: 0; box-shadow: none; min-width: 0; line-height: 1.65; font-size: 14px; }
+.introduction-page .principals-table th { background: #eff4f0; color: #395743; border-top: 2px solid #538062; }
+.introduction-page .principals-table td, .introduction-page .principals-table th { padding: 15px 13px; }
+.introduction-page .principals-table tr:nth-child(even) { background: #fafbf9; }
+.introduction-page .principals-table tr.current-principal td { background: #eef5f0; }
+.introduction-page .symbol-emblem-wrap { border: 0; border-bottom: 1px solid #dfe6e0; padding: 8px 0 32px; box-shadow: none; }
+.introduction-page .symbol-emblem-img { padding: 18px; background: #f7f9f6; }
+.introduction-page .symbol-emblem-img img { width: 130px; height: 130px; }
+.introduction-page .symbol-emblem-text h2 { margin: 0 0 16px; font-size: 24px; }
+.introduction-page .symbol-card { border: 0; box-shadow: none; border-bottom: 1px solid #d9e3dc; }
+.introduction-page .symbol-card-img { background: #f7f9f6; border: 0; }
+.introduction-page .symbol-card-label { color: var(--leaf); }
+.introduction-page .symbol-card-value { color: #324f3b; }
+.introduction-page .symbol-card:nth-child(1) .symbol-card-value { color: var(--camellia); }
+.introduction-page .symbol-card:nth-child(3) .symbol-card-value { color: var(--nav); }
+.intro-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 45px; padding-bottom: 18px; border-bottom: 1px solid #dce5df; }
+.intro-section-heading h2 { display: flex; align-items: center; gap: 10px; margin: 0; }
+.intro-section-heading a { display: inline-flex; align-items: center; gap: 6px; color: var(--nav); font-size: 13px; }
+.introduction-page .song-sheet { border: 0; box-shadow: none; }
+.introduction-page .song-sheet img { height: auto; }
+.introduction-page .map-wrap { border: 0; box-shadow: none; }
+.introduction-page .kakao-map { height: 320px; }
+.introduction-page .map-placeholder { position: relative; gap: 0; }
+.introduction-page .map-placeholder img { width: 100%; height: 100%; object-fit: cover; object-position: center 58%; }
+.introduction-page .map-placeholder p { position: absolute; bottom: 16px; left: 16px; right: 16px; display: flex; align-items: center; gap: 10px; width: fit-content; max-width: calc(100% - 32px); margin: 0; padding: 12px 16px; background: white; color: #31543c; font-size: 14px; text-align: left; line-height: 1.6; }
+.introduction-page .map-placeholder svg { flex-shrink: 0; }
+.introduction-page .map-actions { justify-content: flex-end; padding: 15px 0; gap: 10px; }
+.introduction-page .map-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border-radius: 3px; padding: 12px 16px; }
+.introduction-page .directions-layout { gap: 30px; }
+.introduction-page .directions-card { padding: 20px 0; border: 0; border-top: 2px solid #517a5e; box-shadow: none; }
+.introduction-page .directions-card-title { color: #31543c; }
+.introduction-page .bus-route-badge { color: var(--leaf); background: #edf4ee; }
+.introduction-page .bus-stop-row { border-color: #dfe6e1; }
+@media (max-width: 1000px) {
+  .introduction-page { grid-template-columns: 184px minmax(0, 1fr); gap: 28px; }
+  .association-intro { grid-template-columns: 1fr; gap: 15px; }
+  .association-intro .intro-kicker { margin-bottom: 0; }
+  .association-intro h2 { font-size: 27px; }
+  .chronology-era { grid-template-columns: 1fr; gap: 15px; }
+  .chronology-era ol { margin-left: 5px; }
+  .era-heading h2 { margin: 6px 0 0; }
+  .executive-group { grid-template-columns: 90px minmax(0, 1fr); gap: 16px; }
+  .executive-group ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .heritage-facts dd { font-size: 28px; }
+  .heritage-facts > div { padding-left: 14px; }
+  .introduction-page .directions-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 680px) {
+  .president-letter { padding-top: 28px; }
+  .president-letter-heading h2 { font-size: 23px; }
+  .president-letter-body p { font-size: 15px; line-height: 1.95; margin-bottom: 22px; }
+  .president-signature span { font-size: 13px; }
+  .introduction-page { display: block; padding-top: 0; padding-bottom: 45px; }
+  .introduction-page .section-nav { position: static; margin: 0 -14px 22px; }
+  .introduction-page .section-nav nav { margin: 0; padding: 0 14px; background: #f6f8f6; border-bottom: 1px solid #dce4de; scrollbar-width: thin; }
+  .introduction-page .section-nav a { padding: 16px 13px; font-size: 13px; white-space: nowrap; border-bottom: 0; }
+  .introduction-page .section-nav a svg { display: none; }
+  .introduction-page .section-nav a[aria-current="page"] { box-shadow: inset 0 -3px #23724f; background: none; }
+  .introduction-page .page-heading { padding-bottom: 20px; margin-bottom: 22px; }
+  .intro-breadcrumbs { font-size: 11px; margin-bottom: 15px; gap: 5px; }
+  .introduction-page .page-heading h1 { font-size: 25px; }
+  .introduction-page .page-heading .intro-description { font-size: 14px; }
+  .intro-school-photo > img { height: 215px; }
+  .intro-school-photo figcaption { font-size: 11px; }
+  .association-intro { padding: 26px 0; gap: 12px; }
+  .association-intro h2 { font-size: 25px; }
+  .association-intro > p { font-size: 14px; }
+  .desktop-break { display: none; }
+  .archive-pending { padding: 23px 0; gap: 13px; }
+  .archive-pending > svg { width: 24px; }
+  .archive-pending h2 { font-size: 17px; }
+  .archive-pending p { font-size: 13px; }
+  .association-values article { padding: 0 12px; }
+  .association-values h3 { font-size: 15px; }
+  .association-values p { font-size: 12px; }
+  .intro-next { margin-top: 28px; padding-block: 20px; }
+  .intro-next strong { font-size: 17px; }
+  .archive-heading h2, .roster-heading p { font-size: 24px; }
+  .executive-group { grid-template-columns: 62px minmax(0, 1fr); gap: 18px; padding-block: 22px; }
+  .executive-group ul { gap: 21px 15px; }
+  .executive-group h2 { font-size: 14px; }
+  .executive-person { flex-direction: column; gap: 5px; }
+  .executive-person strong { font-size: 17px; }
+  .executive-person span { font-size: 12px; }
+  .heritage-facts { padding-block: 22px; }
+  .heritage-facts dt { font-size: 10px; }
+  .heritage-facts dd { font-size: 23px; }
+  .heritage-facts dd span { font-size: 11px; margin-left: 3px; }
+  .heritage-facts > div { padding-left: 12px; }
+  .chapter-links { gap: 6px 18px; padding: 8px 0 13px; }
+  .chapter-links a { font-size: 13px; }
+  .chronology-entry p { font-size: 14px; }
+  .introduction-page .rule-body { font-size: 14px; }
+  .introduction-page .rule-article { padding-block: 16px; }
+  .introduction-page .info-row { grid-template-columns: 80px minmax(0, 1fr); gap: 14px; font-size: 14px; }
+  .introduction-page .info-label { font-size: 13px; }
+  .introduction-page .stat-card { padding: 20px 12px; }
+  .introduction-page .principals-table td, .introduction-page .principals-table th { padding: 12px 7px; font-size: 12px; }
+  .introduction-page .principals-table td:first-child { width: auto; }
+  .introduction-page .principals-table td:nth-child(3), .introduction-page .principals-table td:nth-child(4) { font-size: 11px; }
+  .introduction-page .symbol-emblem-wrap { gap: 20px; flex-direction: column; align-items: flex-start; }
+  .introduction-page .symbol-emblem-img { align-self: center; }
+  .introduction-page .symbol-emblem-text h2 { font-size: 22px; }
+  .introduction-page .symbols-trio { grid-template-columns: 1fr; gap: 18px; }
+  .introduction-page .symbol-card { display: grid; grid-template-columns: 115px minmax(0, 1fr); align-items: center; text-align: left; padding-bottom: 18px; }
+  .introduction-page .symbol-card-img { padding: 12px; }
+  .introduction-page .symbol-card-img img { height: 100px; }
+  .introduction-page .symbol-card-body { padding: 10px 18px; }
+  .introduction-page .kakao-map { height: 250px; }
+  .introduction-page .map-placeholder p { left: 12px; right: 12px; bottom: 12px; font-size: 12px; padding: 9px 12px; }
+  .introduction-page .map-btn { flex: 1; font-size: 13px; }
+  .introduction-page .overview-list--grid { column-count: 1; }
+  .introduction-page .song-compare { grid-template-columns: 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .intro-next > svg { transition: none; }
+}
+@media (max-width: 680px), (hover: none) {
+  .nav-item:hover .sub-menu,
+  .nav-item:focus-within .sub-menu {
+    display: none;
+  }
+}

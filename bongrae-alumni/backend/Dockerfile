@@ -1,8 +1,10 @@
 FROM gradle:8.10-jdk21-alpine AS builder
 WORKDIR /workspace
 COPY build.gradle settings.gradle ./
+COPY gradlew ./
+COPY gradle ./gradle
 COPY src ./src
-RUN gradle test bootJar --no-daemon
+RUN sh ./gradlew test bootJar --no-daemon
 
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app

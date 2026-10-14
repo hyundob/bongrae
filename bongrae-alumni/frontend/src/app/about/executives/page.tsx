@@ -1,24 +1,24 @@
 import { executives } from "@/lib/site";
+import { PageShell } from "@/components/PageShell";
+import { IntroNext } from "@/components/Introduction";
 
 export default function ExecutivesPage() {
+  const roles = [...new Set(executives.map((person) => person.role))];
   return (
-    <section className="section">
-      <p className="eyebrow">총동문회 소개</p>
-      <h1>봉래초등학교 총동문회 임원 소개</h1>
-      <div className="executive-table" role="table" aria-label="임원진 명단">
-        <div className="table-row table-head" role="row">
-          <span role="columnheader">직책</span>
-          <span role="columnheader">성명</span>
-          <span role="columnheader">기수</span>
-        </div>
-        {executives.map((person) => (
-          <div className="table-row" role="row" key={`${person.role}-${person.name}`}>
-            <span role="cell">{person.role}</span>
-            <strong role="cell">{person.name}</strong>
-            <span role="cell">{person.classNo}</span>
-          </div>
+    <PageShell title="총동문회 임원 소개" group="총동문회 소개" description="모교와 동문을 위해 함께하는 봉래초등학교 총동문회 임원진입니다." introduction>
+      <div className="roster-heading"><span className="intro-kicker">봉래초등학교 총동문회</span><p>같은 마음으로,<br /><strong>함께 이어가는 봉래.</strong></p></div>
+      <div className="executive-roster">
+        {roles.map((role) => (
+          <section className="executive-group" key={role} aria-label={role}>
+            <h2>{role}</h2>
+            <ul>{executives.filter((person) => person.role === role).map((person) => (
+              <li className="executive-person" key={person.name}><strong>{person.name}</strong><span>제{person.classNo}회</span></li>
+            ))}</ul>
+          </section>
         ))}
       </div>
-    </section>
+      <p className="intro-source-note">제공된 총동문회 임원진 명단 기준</p>
+      <IntroNext href="/about/rules" label="총동문회의 약속">총동문회 회칙</IntroNext>
+    </PageShell>
   );
 }

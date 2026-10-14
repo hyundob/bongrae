@@ -16,7 +16,7 @@ spring:
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     properties:
       hibernate:
         format_sql: true
@@ -33,7 +33,5 @@ logging:
     org.hibernate.SQL: warn
 
 app:
-  jwt:
-    secret: ${JWT_SECRET:change_this_jwt_secret}
   upload:
     path: ${FILE_UPLOAD_PATH:/app/uploads}
