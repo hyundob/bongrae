@@ -34,6 +34,10 @@ public class DirectoryRepository {
     public long create(String name, int classNo, String source, boolean consent, Long userId, String hometown, int graduationYear) {
         return db.queryForObject("INSERT INTO alumni_records(name,class_no,source_note,consent_confirmed,user_id,hometown,graduation_year) VALUES (?,?,?,?,?,NULLIF(?,''),?) RETURNING id", Long.class, name, classNo, source, consent, userId, hometown, graduationYear);
     }
+    public Map<String,Object> find(long id) {
+        var rows=db.queryForList("SELECT id,user_id FROM alumni_records WHERE id=?",id);
+        return rows.isEmpty()?null:rows.get(0);
+    }
     public int update(long id, String name, int classNo, String source, boolean consent, Long userId, String hometown, Integer graduationYear) {
         return db.update("UPDATE alumni_records SET name=?,class_no=?,source_note=?,consent_confirmed=?,user_id=?,"
             + "hometown=NULLIF(COALESCE(?,hometown),''),graduation_year=COALESCE(?,CASE WHEN class_no=? THEN graduation_year ELSE ? END) WHERE id=?",

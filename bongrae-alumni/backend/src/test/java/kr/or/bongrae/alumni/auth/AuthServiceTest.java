@@ -15,12 +15,14 @@ import static org.mockito.ArgumentMatchers.any;
 class AuthServiceTest {
     @Mock UserAccountRepository users;
     @Mock AlumniProfileRepository profiles;
+    @Mock kr.or.bongrae.alumni.directory.DirectoryLinkService directoryLinks;
     private final BCryptPasswordEncoder passwords=new BCryptPasswordEncoder(4);
     private AuthService service;
-    @BeforeEach void setup(){service=new AuthService(users,profiles,passwords);}
+    @BeforeEach void setup(){service=new AuthService(users,profiles,passwords,directoryLinks);}
     @Test void signupHashesPasswordAndKeepsDirectoryPrivate(){
         var user=service.signup(request());
         verify(users).saveAndFlush(user);
+        verify(directoryLinks).onSignup(user);
         assertThat(passwords.matches(request().password(),user.getPasswordHash())).isTrue();
         assertThat(user.getRole()).isEqualTo(MemberRole.MEMBER);
         assertThat(user.getGraduationYear()).isEqualTo(1989);
@@ -45,7 +47,7 @@ class AuthServiceTest {
     }
     void assertRejected(){
         assertThatThrownBy(()->service.signup(request())).isInstanceOfSatisfying(ResponseStatusException.class,e->assertThat(e.getStatusCode().value()).isEqualTo(409));
-        verify(users,never()).saveAndFlush(any()); verifyNoInteractions(profiles);
+        verify(users,never()).saveAndFlush(any()); verifyNoInteractions(profiles,directoryLinks);
     }
     SignupRequest request(){return new SignupRequest("member62","test-password-62","test-password-62","Test Member","member@example.invalid","010-0000-0062","전라남도","고흥군",62,true,true,false,false,false,true,AuthService.POLICY_VERSION);}
 }

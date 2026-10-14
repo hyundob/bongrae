@@ -261,5 +261,5 @@ test("administrator retains source region and graduation year when editing a dir
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: info.outputPath("directory-source-editor.png"), fullPage: true });
   await page.getByRole("button", { name: "저장", exact: true }).click();
-  await expect.poll(() => saved).toMatchObject({ name: "가상자료", classNo: 20, hometown: "가상마을", graduationYear: 1947, consentConfirmed: true });
+  await expect.poll(() => saved).toMatchObject({ name: "가상자료", classNo: 20, hometown: "가상마을", graduationYear: 1947, consentConfirmed: true, expectedUserId: 0 });
 });

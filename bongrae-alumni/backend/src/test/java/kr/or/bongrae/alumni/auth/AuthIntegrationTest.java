@@ -171,6 +171,146 @@ class AuthIntegrationTest {
         assertThat(tree(member.get("/api/alumni?classNo=62")).get("total").asInt()).isEqualTo(1);
         assertThat(member.send("POST","/api/admin/directory",record).statusCode()).isEqualTo(403);
     }
+    long roster(String name,int classNo,String region) {
+        return db.queryForObject("INSERT INTO alumni_records(name,class_no,graduation_year,hometown,source_note,consent_confirmed) VALUES (?,?,?,?,?,true) RETURNING id",
+            Long.class,name,classNo,GraduationYears.forClass(classNo),region,"가상 명부 / 테스트 동의");
+    }
+    long memberId(String username) { return users.findByUsername(username).orElseThrow().getId(); }
+    @Test void signupAutoLinksExactlyOneMatchWithoutChangingConsentRoleOrPrivateData() throws Exception {
+        long id=roster("테스트동문",62,"가상마을");
+        var browser=new Browser(); browser.signup("member62",false);
+        assertThat(db.queryForObject("SELECT user_id FROM alumni_records WHERE id=?",Long.class,id)).isEqualTo(memberId("member62"));
+        assertThat(db.queryForObject("SELECT count(*) FROM alumni_link_reviews",Long.class)).isZero();
+        assertThat(users.findByUsername("member62").orElseThrow().getRole()).isEqualTo(MemberRole.MEMBER);
+        assertThat(tree(browser.get("/api/alumni?classNo=62")).get("total").asInt()).isZero();
+        assertThat(browser.get("/api/auth/me").body()).doesNotContain("가상마을","hometown","source_note");
+        browser.send("PATCH","/api/account/preferences",Map.of("directoryAgreed",true,"smsAgreed",false,"emailAgreed",false));
+        var result=tree(browser.get("/api/alumni?classNo=62"));
+        assertThat(result.get("total").asInt()).isEqualTo(1);
+        assertThat(result.get("items").get(0).get("registered").asBoolean()).isTrue();
+        assertThat(result.toString()).doesNotContain("hometown","source_note","user_id");
+        assertThat(db.queryForObject("SELECT action FROM admin_audit",String.class)).isEqualTo("AUTO_LINK_DIRECTORY");
+        seed("editor",MemberRole.ADMIN); var admin=new Browser(); admin.login("editor");
+        var stale=Map.of("name","테스트동문","classNo",62,"sourceNote","가상 명부","consentConfirmed",true,"expectedUserId",0);
+        assertThat(admin.send("PUT","/api/admin/directory/"+id,stale).statusCode()).isEqualTo(409);
+        assertThat(db.queryForObject("SELECT user_id FROM alumni_records WHERE id=?",Long.class,id)).isEqualTo(memberId("member62"));
+    }
+    @Test void signupDoesNotMatchAnotherNameOrClassOrOverwriteAnOccupiedRecord() throws Exception {
+        long otherName=roster("가상다른이름",62,"가상지역");
+        long otherClass=roster("테스트동문",61,"가상지역");
+        var first=new Browser(); first.signup("firstmember",false);
+        assertThat(db.queryForObject("SELECT count(*) FROM alumni_records WHERE user_id IS NOT NULL",Long.class)).isZero();
+        assertThat(db.queryForObject("SELECT count(*) FROM alumni_link_reviews",Long.class)).isZero();
+        long matching=roster("테스트동문",62,"가상마을");
+        var second=new Browser(); second.signup("secondmember",false);
+        assertThat(db.queryForObject("SELECT reason FROM alumni_link_reviews WHERE user_id=?",String.class,memberId("secondmember"))).isEqualTo("MULTIPLE_MEMBERS");
+        assertThat(db.queryForObject("SELECT user_id FROM alumni_records WHERE id=?",Long.class,matching)).isNull();
+        db.update("UPDATE alumni_records SET user_id=? WHERE id=?",memberId("firstmember"),matching);
+        var third=new Browser(); third.signup("thirdmember",false);
+        assertThat(db.queryForObject("SELECT reason FROM alumni_link_reviews WHERE user_id=?",String.class,memberId("thirdmember"))).isEqualTo("RECORD_IN_USE");
+        assertThat(db.queryForObject("SELECT user_id FROM alumni_records WHERE id=?",Long.class,matching)).isEqualTo(memberId("firstmember"));
+        assertThat(db.queryForObject("SELECT count(*) FROM alumni_records WHERE id IN (?,?) AND user_id IS NULL",Long.class,otherName,otherClass)).isEqualTo(2);
+    }
+    @Test void ambiguousSignupIsReviewedByAdminsOnlyWithCsrfAndFreshCandidateChecks() throws Exception {
+        long first=roster("테스트동문",62,"가상마을가"), second=roster("테스트동문",62,"가상마을나");
+        long wrong=roster("테스트동문",61,"가상마을다");
+        var member=new Browser(); member.signup("member62",false);
+        long userId=memberId("member62"); String path="/api/admin/directory-links/"+userId;
+        assertThat(db.queryForObject("SELECT reason FROM alumni_link_reviews WHERE user_id=?",String.class,userId)).isEqualTo("MULTIPLE_RECORDS");
+        assertThat(db.queryForObject("SELECT count(*) FROM alumni_records WHERE user_id IS NOT NULL",Long.class)).isZero();
+        assertThat(new Browser().get("/api/admin/directory-links").statusCode()).isEqualTo(401);
+        assertThat(new Browser().send("POST",path,Map.of("decision","LINK","recordId",first)).statusCode()).isEqualTo(401);
+        for (String role:List.of("MEMBER","PENDING")) {
+            db.update("UPDATE users SET role=? WHERE id=?",role,userId);
+            assertThat(member.get("/api/admin/directory-links").statusCode()).isEqualTo(403);
+            assertThat(member.get(path).statusCode()).isEqualTo(403);
+            assertThat(member.send("POST",path,Map.of("decision","LINK","recordId",first)).statusCode()).isEqualTo(403);
+        }
+        seed("editor",MemberRole.ADMIN); var admin=new Browser(); admin.login("editor");
+        var list=tree(admin.get("/api/admin/directory-links"));
+        assertThat(list.get("total").asInt()).isEqualTo(1);
+        assertThat(list.get("items").get(0).get("candidate_count").asInt()).isEqualTo(2);
+        assertThat(tree(admin.get(path)).get("candidates").size()).isEqualTo(2);
+        assertThat(admin.get(path).body()).contains("가상마을가","가상마을나").doesNotContain("password","email","phone","source_note");
+        assertThat(admin.get("/api/admin/directory-links?status=bad").statusCode()).isEqualTo(400);
+        assertThat(admin.request("POST",path,Map.of("decision","LINK","recordId",first),false).statusCode()).isEqualTo(403);
+        assertThat(admin.send("POST",path,Map.of("decision","LINK")).statusCode()).isEqualTo(400);
+        assertThat(admin.send("POST",path,Map.of("decision","LINK","recordId",wrong)).statusCode()).isEqualTo(409);
+        assertThat(admin.send("POST",path,Map.of("decision","LINK","recordId",second)).statusCode()).isEqualTo(204);
+        assertThat(db.queryForObject("SELECT user_id FROM alumni_records WHERE id=?",Long.class,second)).isEqualTo(userId);
+        assertThat(db.queryForObject("SELECT status FROM alumni_link_reviews WHERE user_id=?",String.class,userId)).isEqualTo("LINKED");
+        assertThat(tree(admin.get("/api/admin/directory-links")).get("total").asInt()).isZero();
+        assertThat(tree(admin.get("/api/admin/directory-links?status=LINKED")).get("total").asInt()).isEqualTo(1);
+        assertThat(admin.send("POST",path,Map.of("decision","LINK","recordId",first)).statusCode()).isEqualTo(409);
+        var secondMember=new Browser(); secondMember.signup("secondmember",false);
+        assertThat(db.queryForObject("SELECT reason FROM alumni_link_reviews WHERE user_id=?",String.class,memberId("secondmember"))).isEqualTo("MULTIPLE_RECORDS");
+        assertThat(db.queryForObject("SELECT user_id FROM alumni_records WHERE id=?",Long.class,first)).isNull();
+        assertThat(admin.send("POST","/api/admin/directory-links/"+memberId("secondmember"),Map.of("decision","LINK","recordId",second)).statusCode()).isEqualTo(409);
+    }
+    @Test void dismissedReviewsAndManualLinksStayConsistentAndWithdrawalClearsReview() throws Exception {
+        long first=roster("테스트동문",62,"가상마을가"); roster("테스트동문",62,"가상마을나");
+        seed("owner",MemberRole.SUPER_ADMIN); var admin=new Browser(); admin.login("owner");
+        var member=new Browser(); member.signup("member62",false); long userId=memberId("member62");
+        String path="/api/admin/directory-links/"+userId;
+        assertThat(admin.send("POST",path,Map.of("decision","DISMISS")).statusCode()).isEqualTo(204);
+        assertThat(tree(admin.get("/api/admin/directory-links?status=DISMISSED")).get("total").asInt()).isEqualTo(1);
+        assertThat(db.queryForObject("SELECT count(*) FROM alumni_records WHERE user_id IS NOT NULL",Long.class)).isZero();
+        var record=new HashMap<String,Object>(Map.of("name","테스트동문","classNo",62,"sourceNote","가상 명부 / 테스트 확인","consentConfirmed",true,"userId",userId));
+        assertThat(admin.send("PUT","/api/admin/directory/"+first,record).statusCode()).isEqualTo(200);
+        assertThat(db.queryForObject("SELECT status FROM alumni_link_reviews WHERE user_id=?",String.class,userId)).isEqualTo("LINKED");
+        record.remove("userId");
+        assertThat(admin.send("PUT","/api/admin/directory/"+first,record).statusCode()).isEqualTo(200);
+        assertThat(db.queryForObject("SELECT status FROM alumni_link_reviews WHERE user_id=?",String.class,userId)).isEqualTo("DISMISSED");
+        assertThat(member.send("DELETE","/api/account",Map.of("password",PASSWORD)).statusCode()).isEqualTo(204);
+        assertThat(db.queryForObject("SELECT count(*) FROM alumni_link_reviews",Long.class)).isZero();
+        assertThat(db.queryForObject("SELECT count(*) FROM alumni_records",Long.class)).isEqualTo(2);
+    }
+    @Test void simultaneousSignupsClaimOneRecordOnly() throws Exception {
+        long id=roster("테스트동문",62,"가상마을");
+        try (var executor=java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var start=new java.util.concurrent.CountDownLatch(1);
+            var requests=List.of("firstmember","secondmember").stream().map(username->executor.submit(()->{
+                start.await(); return new Browser().send("POST","/api/auth/signup",signupBody(username,false)).statusCode();
+            })).toList();
+            start.countDown();
+            for (var request:requests) assertThat(request.get(30,java.util.concurrent.TimeUnit.SECONDS)).isEqualTo(200);
+        }
+        assertThat(db.queryForObject("SELECT user_id FROM alumni_records WHERE id=?",Long.class,id)).isNotNull();
+        assertThat(db.queryForObject("SELECT count(*) FROM alumni_link_reviews WHERE status='PENDING'",Long.class)).isEqualTo(1);
+        assertThat(db.queryForObject("SELECT count(*) FROM users",Long.class)).isEqualTo(2);
+    }
+    @Test void simultaneousReviewDecisionsCannotClaimTheSameRecord() throws Exception {
+        long id=roster("테스트동문",62,"가상마을가"); roster("테스트동문",62,"가상마을나");
+        new Browser().signup("firstmember",false); new Browser().signup("secondmember",false);
+        seed("editor",MemberRole.ADMIN); seed("owner",MemberRole.SUPER_ADMIN);
+        var first=new Browser(); first.login("editor"); var second=new Browser(); second.login("owner");
+        try (var executor=java.util.concurrent.Executors.newFixedThreadPool(2)) {
+            var start=new java.util.concurrent.CountDownLatch(1);
+            long firstId=memberId("firstmember"),secondId=memberId("secondmember");
+            var one=executor.submit(()->{ start.await(); return first.send("POST","/api/admin/directory-links/"+firstId,Map.of("decision","LINK","recordId",id)).statusCode(); });
+            var two=executor.submit(()->{ start.await(); return second.send("POST","/api/admin/directory-links/"+secondId,Map.of("decision","LINK","recordId",id)).statusCode(); });
+            start.countDown();
+            assertThat(List.of(one.get(30,java.util.concurrent.TimeUnit.SECONDS),two.get(30,java.util.concurrent.TimeUnit.SECONDS))).containsExactlyInAnyOrder(204,409);
+        }
+        assertThat(db.queryForObject("SELECT count(*) FROM alumni_link_reviews WHERE status='LINKED'",Long.class)).isEqualTo(1);
+        assertThat(db.queryForObject("SELECT count(*) FROM alumni_link_reviews WHERE status='PENDING'",Long.class)).isEqualTo(1);
+    }
+    @Test void reviewMigrationQueuesExistingMatchesWithoutChangingExistingLinksOrConsent() {
+        Flyway.configure().dataSource(postgres.getJdbcUrl(),postgres.getUsername(),postgres.getPassword())
+            .schemas("link_upgrade").defaultSchema("link_upgrade").target("4").load().migrate();
+        try {
+            for (int n=1;n<=4;n++) db.update("INSERT INTO link_upgrade.users(id,username,password_hash,name,email,class_no,role,terms_agreed,privacy_agreed,sms_agreed,email_agreed,enabled,created_at) VALUES (?,?, 'hash',?,?,62,'MEMBER',true,true,false,false,true,now())",
+                n,"synthetic"+n,"가상회원"+n,"synthetic"+n+"@example.invalid");
+            db.update("INSERT INTO link_upgrade.alumni_records(name,class_no,source_note,consent_confirmed,user_id) VALUES ('가상회원1',62,'synthetic',false,NULL),('가상회원2',62,'synthetic',true,NULL),('가상회원2',62,'synthetic',true,NULL),('가상회원3',62,'synthetic',false,3)");
+            Flyway.configure().dataSource(postgres.getJdbcUrl(),postgres.getUsername(),postgres.getPassword())
+                .schemas("link_upgrade").defaultSchema("link_upgrade").load().migrate();
+            assertThat(db.queryForList("SELECT user_id FROM link_upgrade.alumni_link_reviews ORDER BY user_id",Long.class)).containsExactly(1L,2L);
+            assertThat(db.queryForObject("SELECT reason FROM link_upgrade.alumni_link_reviews WHERE user_id=1",String.class)).isEqualTo("EXISTING_MEMBER");
+            assertThat(db.queryForObject("SELECT reason FROM link_upgrade.alumni_link_reviews WHERE user_id=2",String.class)).isEqualTo("MULTIPLE_RECORDS");
+            assertThat(db.queryForObject("SELECT count(*) FROM link_upgrade.alumni_records WHERE user_id IS NOT NULL",Long.class)).isEqualTo(1);
+            assertThat(db.queryForObject("SELECT count(*) FROM link_upgrade.alumni_records WHERE NOT consent_confirmed",Long.class)).isEqualTo(2);
+        } finally { db.execute("DROP SCHEMA link_upgrade CASCADE"); }
+    }
     @Test void boardPermissionsOwnershipAndOptimisticUpdates() throws Exception {
         seed("editor",MemberRole.ADMIN); var admin=new Browser(); admin.login("editor");
         var first=new Browser(); first.signup("member62",false);
@@ -272,7 +412,7 @@ class AuthIntegrationTest {
         Flyway.configure().dataSource(postgres.getJdbcUrl(),postgres.getUsername(),postgres.getPassword())
             .schemas("legacy_upgrade").defaultSchema("legacy_upgrade").baselineOnMigrate(true).baselineVersion("0").load().migrate();
         assertThat(db.queryForObject("SELECT username FROM legacy_upgrade.users",String.class)).isEqualTo("legacy");
-        assertThat(db.queryForObject("SELECT count(*) FROM legacy_upgrade.flyway_schema_history WHERE success",Long.class)).isEqualTo(5);
+        assertThat(db.queryForObject("SELECT count(*) FROM legacy_upgrade.flyway_schema_history WHERE success",Long.class)).isEqualTo(6);
         assertThat(db.queryForObject("SELECT graduation_year FROM legacy_upgrade.users",Integer.class)).isEqualTo(1947);
         db.execute("DROP SCHEMA legacy_upgrade CASCADE");
     }

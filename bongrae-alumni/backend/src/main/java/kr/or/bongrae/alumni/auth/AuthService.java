@@ -3,6 +3,7 @@ package kr.or.bongrae.alumni.auth;
 import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import kr.or.bongrae.alumni.member.*;
+import kr.or.bongrae.alumni.directory.DirectoryLinkService;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -15,8 +16,9 @@ public class AuthService {
     private final UserAccountRepository users;
     private final AlumniProfileRepository profiles;
     private final PasswordEncoder passwords;
-    public AuthService(UserAccountRepository users, AlumniProfileRepository profiles, PasswordEncoder passwords) {
-        this.users = users; this.profiles = profiles; this.passwords = passwords;
+    private final DirectoryLinkService directoryLinks;
+    public AuthService(UserAccountRepository users, AlumniProfileRepository profiles, PasswordEncoder passwords, DirectoryLinkService directoryLinks) {
+        this.users = users; this.profiles = profiles; this.passwords = passwords; this.directoryLinks = directoryLinks;
     }
     @Transactional
     public UserAccount signup(SignupRequest request) {
@@ -39,6 +41,7 @@ public class AuthService {
         var profile = new AlumniProfile(user);
         profile.setPublicProfile(request.directoryAgreed());
         profiles.save(profile);
+        directoryLinks.onSignup(user);
         return user;
     }
     @Transactional(readOnly = true)

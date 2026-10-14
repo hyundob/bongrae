@@ -23,9 +23,9 @@
 | 접근 정책 | backend/.../config | Spring Security, 매 요청 DB 권한 갱신 |
 | 회원 | backend/.../member | 회원·프로필 JPA, 선택 동의, 탈퇴 |
 | 관리자 | backend/.../admin | 최초 SUPER_ADMIN 생성, 회원 목록, ADMIN 부여·회수 |
-| 검색 | backend/.../directory | JPA 회원 + JDBC 명부, 공개 범위 강제 |
+| 검색 | backend/.../directory | JPA 회원 + JDBC 명부, 공개 범위 강제, 가입 자동 연결·관리자 연결 확인 |
 | 게시판 | backend/.../board | Controller/Service/JDBC Repository, 글·사진·영상 |
-| 마이그레이션 | backend/src/main/resources/db/migration | Flyway V1 회원/세션, V2 명부/게시판, V3 명부 원문 정보/연도 보정, V4 등록 처리 기록 |
+| 마이그레이션 | backend/src/main/resources/db/migration | Flyway V1 회원/세션, V2 명부/게시판, V3 명부 원문 정보/연도 보정, V4 등록 처리 기록, V5 회원 연결 확인 |
 | 정적 자료 API | backend/.../content | 학교·회칙 등 초기 자료 |
 | 검증 | 저장소 scripts/verify.mjs | 빌드, 단위/DB/브라우저/배포 모의 검사 |
 
@@ -52,6 +52,7 @@
 | 자유게시판 수정·삭제 | 불가 | 본인 글 | 모든 글 | 모든 글 |
 | 알림마당 작성·수정·삭제 | 불가 | 불가 | 허용 | 허용 |
 | 동문 명부 관리 | 불가 | 불가 | 허용 | 허용 |
+| 회원 연결 확인·연결·제외 | 불가 | 불가 | 허용 | 허용 |
 | ADMIN 지정·회수 | 불가 | 불가 | 불가 | 허용 |
 
 신규 회원은 바로 MEMBER이다. GUEST는 로그인 대상이 아니며 기존 PENDING은 로그인 회원으로 처리한다.
@@ -62,12 +63,13 @@ SUPER_ADMIN은 DB 부분 유일 인덱스로 최대 1명, 명시적 환경변수
 
 - users: 로그인·회원정보, 역할, 동의 여부·문서 버전·일시.
 - alumni_profiles: 검색 공개 선택 및 동의 일시.
-- alumni_records: 미가입 동문 이름·기수·원문 졸업연도·명부 지역·동의 근거, 확인 후 회원 계정 연결. 명부 지역은 현재 거주지로 간주하지 않으며 관리자에게만 제공한다.
+- alumni_records: 미가입 동문 이름·기수·원문 졸업연도·명부 지역·동의 근거, 가입 자동 매칭 또는 관리자 확인 후 회원 계정 연결. 명부 지역은 현재 거주지로 간주하지 않으며 관리자에게만 제공한다.
+- alumni_link_reviews: 중복 명부·중복 가입 계정·이미 사용 중인 명부의 연결 확인 대기/완료/제외, 처리자와 처리 시각. 회원 탈퇴 시 확인 기록도 삭제한다.
 - alumni_import_keys: 파일 내 기수·순번에 따른 등록 처리 기록. 명부가 삭제되면 연결만 비우고 기록을 남겨 재등록으로 복원되지 않도록 한다.
 - board_posts: 게시판 종류, 제목·본문, 작성자, 수정 버전.
 - board_media: 임시/게시 첨부파일, 크기/형식과 바이너리. 글당 5개, 파일당 16MB.
 - spring_session, spring_session_attributes: 서버 세션.
-- admin_audit: 권한 변경자·대상·변경 내용.
+- admin_audit: 권한 변경 및 명부 자동/수동 연결·해제·제외. 연결 이력에는 계정·명부 ID만 기록한다.
 
 검색 결과는 이름/기수/졸업연도/가입 여부만 반환한다. 공개 동의 없는 회원은 제외한다.
 연결되지 않은 명부는 당사자 동의가 확인된 경우만 표시한다.
@@ -77,6 +79,17 @@ SUPER_ADMIN은 DB 부분 유일 인덱스로 최대 1명, 명시적 환경변수
 
 HWPX 명부의 20회 이상 추출·검토·등록은 [명부 가져오기](roster-import.md)를 따른다. 실제 명부와 등록 SQL은 Git에 넣지 않는다.
 
+## 회원 연결
+
+- 신규 가입 트랜잭션에서 이름(가입 입력 앞뒤 공백 제거)과 기수가 정확히 일치하는 전체 명부를 조회한다. 지역이나 비슷한 이름으로 추정하지 않는다.
+- 명부 1건, 연결 대상 활성 계정 1개, 아직 미연결인 경우에만 자동 연결한다. 일치 명부가 없으면 가입만 진행한다.
+- 명부가 여러 건이면 이미 연결된 후보를 제외해 1건으로 간주하지 않는다. 여러 계정이 같은 이름·기수를 쓰거나 유일한 명부가 이미 연결된 경우도 관리자 확인 대상으로 남긴다.
+- 관리자 > 회원 연결 확인에서 후보의 지역·연도·기존 연결을 비교하고 본인 확인 후 연결하거나 제외한다. 제외는 계정·명부 삭제가 아니다. 대기/완료/제외 내역을 조회할 수 있다.
+- V5는 기존 미연결 회원 중 일치 명부가 있는 회원을 확인 대기로만 등록한다. 배포 중 자동 연결·기존 연결 교체는 하지 않는다. 이후 별도 명부 추가만으로 기존 계정을 소급 자동 연결하지 않는다.
+- 가입, 연결 확인, 기존 명부 수정·삭제, 탈퇴는 명부 가져오기와 같은 DB 테이블 잠금을 사용해 쓰기를 짧게 직렬화한다. 한 명부/계정의 중복 연결, 승인 시점의 후보 변경 및 재처리를 거부한다.
+- 기존 동문 명부 화면의 수동 연결·해제도 확인 상태와 감사 기록에 반영한다. 이미 다른 회원과 연결된 명부를 바꾸려면 먼저 기존 연결을 해제해야 한다.
+- 이름·기수 매칭은 실명/휴대전화 본인인증이 아니다. 공개 동의나 권한을 변경하지 않으며 가입 응답에 후보 명부를 공개하지 않는다. 미확인 동명이인의 가입 계정과 명부는 연결 전 각각 검색에 보일 수 있다.
+
 ## API
 
 - GET /api/auth/csrf, /api/auth/me
@@ -85,6 +98,8 @@ HWPX 명부의 20회 이상 추출·검토·등록은 [명부 가져오기](rost
 - GET /api/alumni?name=&classNo=&page=
 - GET /api/admin/members, PATCH /api/admin/members/{id}/role
 - GET/POST /api/admin/directory, PUT/DELETE /api/admin/directory/{id}
+- GET /api/admin/directory-links?status=PENDING|LINKED|DISMISSED&name=&page=
+- GET /api/admin/directory-links/{userId}, POST /api/admin/directory-links/{userId} (decision: LINK/DISMISS, LINK 시 recordId 필수)
 - GET/POST /api/boards/{board}/posts, GET/PUT/DELETE /api/boards/{board}/posts/{id}
 - POST /api/media, GET/DELETE /api/media/{uuid}
 

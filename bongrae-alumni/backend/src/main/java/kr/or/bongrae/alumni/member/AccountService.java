@@ -43,6 +43,7 @@ public class AccountService {
         var user = current.require();
         if (!passwords.matches(password, user.getPasswordHash())) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "비밀번호를 확인해 주세요.");
         if (user.getRole() == MemberRole.SUPER_ADMIN) throw new ResponseStatusException(HttpStatus.CONFLICT, "총괄 관리자 계정은 탈퇴할 수 없습니다.");
+        jdbc.execute("LOCK TABLE alumni_records IN SHARE ROW EXCLUSIVE MODE");
         jdbc.update("DELETE FROM alumni_records WHERE user_id = ?", user.getId());
         jdbc.update("UPDATE users SET approved_by = NULL WHERE approved_by = ?", user.getId());
         profiles.deleteByUserId(user.getId());

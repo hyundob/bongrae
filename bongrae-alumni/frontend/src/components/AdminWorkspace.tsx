@@ -6,6 +6,7 @@ import { useRemote } from "@/lib/useRemote";
 import { latestGraduatingClass } from "@/lib/graduation";
 import { useAuth } from "./AuthProvider";
 import { Pagination } from "./Pagination";
+import { DirectoryLinkReviews } from "./DirectoryLinkReviews";
 type ManagedMember = {
   id: number;
   username: string;
@@ -34,7 +35,7 @@ export function AdminWorkspace() {
   const [tab, setTab] = useState("members");
   return (
     <>
-      <div className="view-tabs" role="tablist" aria-label="관리 메뉴">
+      <div className="view-tabs admin-tabs" role="tablist" aria-label="관리 메뉴">
         <button
           role="tab"
           aria-selected={tab === "members"}
@@ -49,9 +50,12 @@ export function AdminWorkspace() {
         >
           동문 명부
         </button>
+        <button role="tab" aria-selected={tab === "links"} onClick={() => setTab("links")}>
+          회원 연결 확인
+        </button>
       </div>
       <div role="tabpanel">
-        {tab === "members" ? <Members /> : <Directory />}
+        {tab === "members" ? <Members /> : tab === "directory" ? <Directory /> : <DirectoryLinkReviews />}
       </div>
     </>
   );
@@ -330,6 +334,7 @@ function RecordEditor({ item, done }: { item?: RecordItem; done: () => void }) {
           sourceNote: form.get("sourceNote"),
           consentConfirmed: form.has("consentConfirmed"),
           userId: form.get("userId") ? Number(form.get("userId")) : null,
+          expectedUserId: item ? item.user_id ?? 0 : undefined,
         }),
       });
       done();
