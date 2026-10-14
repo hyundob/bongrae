@@ -41,6 +41,23 @@ jobs:
         with:
           persist-credentials: false
 
+      - name: Validate SSH credentials before building
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_SSH_KEY" || { echo 'DEPLOY_SSH_KEY is missing'; exit 1; }
+          test -n "$DEPLOY_KNOWN_HOSTS" || { echo 'DEPLOY_KNOWN_HOSTS is missing'; exit 1; }
+          umask 077
+          key_file="$(mktemp "$RUNNER_TEMP/bongrae-key-check.XXXXXX")"
+          trap 'rm -f "$key_file"' EXIT
+          printf '%s\n' "$DEPLOY_SSH_KEY" | tr -d '\r' > "$key_file"
+          if ! ssh-keygen -y -P '' -f "$key_file" >/dev/null 2>&1; then
+            echo '::error::DEPLOY_SSH_KEY is not a valid unencrypted private key. Copy the complete server key directly into the GitHub Secret, including BEGIN and END lines.'
+            exit 1
+          fi
+
       - name: Build backend and frontend
         working-directory: bongrae-alumni
         run: |
@@ -71,8 +88,8 @@ jobs:
           umask 077
           ssh_dir="$(mktemp -d "$RUNNER_TEMP/bongrae-ssh.XXXXXX")"
           trap 'rm -f "$ssh_dir/key" "$ssh_dir/known_hosts"; rmdir "$ssh_dir"' EXIT
-          printf '%s\n' "$DEPLOY_SSH_KEY" > "$ssh_dir/key"
-          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$ssh_dir/known_hosts"
+          printf '%s\n' "$DEPLOY_SSH_KEY" | tr -d '\r' > "$ssh_dir/key"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" | tr -d '\r' > "$ssh_dir/known_hosts"
           ssh -T -p 22 -i "$ssh_dir/key" \
             -o BatchMode=yes -o IdentitiesOnly=yes \
             -o StrictHostKeyChecking=yes \
