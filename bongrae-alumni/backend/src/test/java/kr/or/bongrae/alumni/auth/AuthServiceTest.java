@@ -23,7 +23,7 @@ class AuthServiceTest {
         verify(users).saveAndFlush(user);
         assertThat(passwords.matches(request().password(),user.getPasswordHash())).isTrue();
         assertThat(user.getRole()).isEqualTo(MemberRole.MEMBER);
-        assertThat(user.getGraduationYear()).isEqualTo(1988);
+        assertThat(user.getGraduationYear()).isEqualTo(1989);
         assertThat(user.getTermsVersion()).isEqualTo(AuthService.POLICY_VERSION);
         var profile=ArgumentCaptor.forClass(AlumniProfile.class);
         verify(profiles).save(profile.capture());

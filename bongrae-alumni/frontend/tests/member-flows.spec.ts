@@ -53,8 +53,12 @@ test("signup opens policies in new tabs and submits explicit consents", async ({
   await page.locator("input[name=passwordConfirm]").fill("test-password-62");
   await page.locator("input[name=email]").fill("member@example.invalid");
   await page.locator("input[name=phone]").fill("010-0000-0062");
+  for (const [classNo, year] of [["1", "1927"], ["2", "1928"], ["20", "1947"], ["97", "2024"]]) {
+    await page.locator("select[name=classNo]").selectOption(classNo);
+    await expect(page.getByLabel("졸업 연도")).toHaveValue(`${year}년`);
+  }
   await page.locator("select[name=classNo]").selectOption("62");
-  await expect(page.getByLabel("졸업 연도")).toHaveValue("1988년");
+  await expect(page.getByLabel("졸업 연도")).toHaveValue("1989년");
   for (const field of ["smsAgreed", "emailAgreed", "directoryAgreed"])
     await expect(page.locator(`input[name=${field}]`)).not.toBeChecked();
   for (const field of ["termsAgreed", "privacyAgreed", "ageConfirmed"])
@@ -96,13 +100,13 @@ test("anonymous directory is guarded and members see registration status", async
           {
             name: "테스트가입",
             class_no: 62,
-            graduation_year: 1988,
+            graduation_year: 1989,
             registered: true,
           },
           {
             name: "테스트미가입",
             class_no: 62,
-            graduation_year: 1988,
+            graduation_year: 1989,
             registered: false,
           },
         ],
@@ -232,4 +236,30 @@ test("login server validation errors remain on the form without leaking inputs",
     "아이디 또는 비밀번호",
   );
   await expect(page).toHaveURL(/\/login$/);
+});
+
+test("administrator retains source region and graduation year when editing a directory record", async ({ page }, info) => {
+  await mockApi(page, { ...member, role: "ADMIN" });
+  const item = { id: 20, name: "가상자료", class_no: 20, hometown: "가상마을", graduation_year: 1947,
+    source_note: "가상 명부 / 테스트 동의 확인", consent_confirmed: true, user_id: null };
+  let saved: Record<string, unknown> | null = null;
+  await page.route("**/api/admin/members?*", route => route.fulfill({ json: { items: [], total: 0, page: 0, pages: 0, size: 20 } }));
+  await page.route("**/api/admin/directory?*", route => route.fulfill({ json: { items: [item], total: 1, page: 0, pages: 1, size: 20 } }));
+  await page.route("**/api/admin/directory/20", route => {
+    saved = route.request().postDataJSON();
+    return route.fulfill({ json: { id: 20 } });
+  });
+  await page.goto("/admin");
+  await page.getByRole("tab", { name: "동문 명부" }).click();
+  await expect(page.getByRole("cell", { name: "가상마을", exact: true })).toBeVisible();
+  await expect(page.getByRole("cell", { name: /20회\s*1947년/ })).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: info.outputPath("directory-source-list.png"), fullPage: true });
+  await page.getByRole("button", { name: "가상자료 수정" }).click();
+  await expect(page.getByLabel("명부 지역", { exact: true })).toHaveValue("가상마을");
+  await expect(page.getByLabel("졸업연도", { exact: true })).toHaveValue("1947");
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: info.outputPath("directory-source-editor.png"), fullPage: true });
+  await page.getByRole("button", { name: "저장", exact: true }).click();
+  await expect.poll(() => saved).toMatchObject({ name: "가상자료", classNo: 20, hometown: "가상마을", graduationYear: 1947, consentConfirmed: true });
 });

@@ -71,11 +71,13 @@ const checks = {
   backend() {
     run("Docker engine for disposable PostgreSQL", "docker", ["info", "--format", "{{.ServerVersion}}"]);
     gradle(["clean", "test", "integrationTest", "bootJar"]);
+    run("Roster SQL import against disposable PostgreSQL", windows ? "python" : "python3", ["-X", "utf8", "-m", "unittest", "scripts.tests.roster_database_test"]);
   },
   "backend-unit"() {
     gradle(["clean", "test", "bootJar"]);
   },
   infra() {
+    run("HWPX roster import tests (synthetic records)", windows ? "python" : "python3", ["-X", "utf8", "-m", "unittest", "discover", "-s", "scripts/tests", "-p", "test_*.py"]);
     run("Whitespace errors", "git", ["diff", "--check"]);
     const safeEnv = {
       POSTGRES_DB: "harness", POSTGRES_USER: "harness", POSTGRES_PASSWORD: "harness-only",

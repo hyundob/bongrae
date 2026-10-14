@@ -43,7 +43,7 @@ public class UserAccount {
     @Column(length = 50)
     private String regionCity;
 
-    // 졸업 기수 (1~99), 졸업연도 = 1926 + classNo
+    // Source register: classes 1/2 are 1927/1928; class 3 is 1930.
     @Column
     private Integer classNo;
 
@@ -108,7 +108,7 @@ public class UserAccount {
         this.regionProvince = regionProvince;
         this.regionCity = regionCity;
         this.classNo = classNo;
-        this.graduationYear = (classNo != null) ? 1926 + classNo : null;
+        this.graduationYear = (classNo != null) ? GraduationYears.forClass(classNo) : null;
         this.termsAgreed = termsAgreed;
         this.privacyAgreed = privacyAgreed;
         this.smsAgreed = smsAgreed;

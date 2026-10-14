@@ -192,6 +192,36 @@ class AuthIntegrationTest {
         db.update("UPDATE users SET role='PENDING' WHERE username='member62'");
         assertThat(first.send("POST","/api/boards/free/posts",post("legacy pending member",0)).statusCode()).isEqualTo(201);
     }
+    @Test void directorySourceDetailsRemainPrivateAndSurviveLegacyUpdates() throws Exception {
+        seed("editor",MemberRole.ADMIN); var admin=new Browser(); admin.login("editor");
+        var member=new Browser(); member.signup("member62",false);
+        var record=new HashMap<String,Object>();
+        record.put("name","가상자료"); record.put("classNo",20); record.put("sourceNote","가상 명부 / 테스트 동의");
+        record.put("consentConfirmed",true); record.put("hometown","가상마을"); record.put("graduationYear",1947);
+        var response=admin.send("POST","/api/admin/directory",record);
+        assertThat(response.statusCode()).isEqualTo(201);
+        long id=tree(response).get("id").asLong();
+        db.update("INSERT INTO alumni_import_keys(source_key,record_id) VALUES (?,?)","synthetic:20:0001",id);
+        var managed=tree(admin.get("/api/admin/directory?classNo=20")).get("items").get(0);
+        assertThat(managed.get("hometown").asText()).isEqualTo("가상마을");
+        assertThat(managed.get("graduation_year").asInt()).isEqualTo(1947);
+        var result=tree(member.get("/api/alumni?classNo=20"));
+        assertThat(result.get("items").get(0).get("graduation_year").asInt()).isEqualTo(1947);
+        assertThat(result.toString()).doesNotContain("hometown","source_note","source_key","가상마을");
+        assertThat(new Browser().get("/api/alumni?classNo=20").statusCode()).isEqualTo(401);
+        record.remove("hometown"); record.remove("graduationYear");
+        assertThat(admin.send("PUT","/api/admin/directory/"+id,record).statusCode()).isEqualTo(200);
+        assertThat(db.queryForObject("SELECT hometown FROM alumni_records WHERE id=?",String.class,id)).isEqualTo("가상마을");
+        assertThat(db.queryForObject("SELECT graduation_year FROM alumni_records WHERE id=?",Integer.class,id)).isEqualTo(1947);
+        record.put("hometown",""); record.put("consentConfirmed",false);
+        assertThat(admin.send("PUT","/api/admin/directory/"+id,record).statusCode()).isEqualTo(200);
+        assertThat(db.queryForObject("SELECT hometown FROM alumni_records WHERE id=?",String.class,id)).isNull();
+        assertThat(tree(member.get("/api/alumni?classNo=20")).get("total").asInt()).isZero();
+        record.put("graduationYear",2100);
+        assertThat(admin.send("PUT","/api/admin/directory/"+id,record).statusCode()).isEqualTo(400);
+        assertThat(admin.send("DELETE","/api/admin/directory/"+id,null).statusCode()).isEqualTo(204);
+        assertThat(db.queryForObject("SELECT count(*) FROM alumni_import_keys WHERE source_key='synthetic:20:0001' AND record_id IS NULL",Integer.class)).isEqualTo(1);
+    }
     @Test void withdrawalRemovesPrivateInformationAndSessionButPreservesAnonymizedPost() throws Exception {
         var browser=new Browser(); browser.signup("member62",true);
         long postId=tree(browser.send("POST","/api/boards/free/posts",post("public text",0))).get("id").asLong();
@@ -238,10 +268,12 @@ class AuthIntegrationTest {
         for(String column:List.of("terms_version","privacy_version","consented_at","preferences_updated_at","age_confirmed")) db.execute("ALTER TABLE legacy_upgrade.users DROP COLUMN "+column);
         db.execute("ALTER TABLE legacy_upgrade.alumni_profiles DROP COLUMN directory_consent_at");
         db.update("INSERT INTO legacy_upgrade.users(username,password_hash,name,email,role,terms_agreed,privacy_agreed,sms_agreed,email_agreed,enabled,created_at) VALUES ('legacy','hash','테스트기존','legacy@example.invalid','PENDING',true,true,false,false,true,now())");
+        db.update("UPDATE legacy_upgrade.users SET class_no=20, graduation_year=1946");
         Flyway.configure().dataSource(postgres.getJdbcUrl(),postgres.getUsername(),postgres.getPassword())
             .schemas("legacy_upgrade").defaultSchema("legacy_upgrade").baselineOnMigrate(true).baselineVersion("0").load().migrate();
         assertThat(db.queryForObject("SELECT username FROM legacy_upgrade.users",String.class)).isEqualTo("legacy");
-        assertThat(db.queryForObject("SELECT count(*) FROM legacy_upgrade.flyway_schema_history WHERE success",Long.class)).isEqualTo(3);
+        assertThat(db.queryForObject("SELECT count(*) FROM legacy_upgrade.flyway_schema_history WHERE success",Long.class)).isEqualTo(5);
+        assertThat(db.queryForObject("SELECT graduation_year FROM legacy_upgrade.users",Integer.class)).isEqualTo(1947);
         db.execute("DROP SCHEMA legacy_upgrade CASCADE");
     }
 }

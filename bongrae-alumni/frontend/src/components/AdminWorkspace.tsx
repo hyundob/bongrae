@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Pencil, Save, Search, Trash2, Plus } from "lucide-react";
 import { api, message, PageResult } from "@/lib/api";
 import { useRemote } from "@/lib/useRemote";
+import { latestGraduatingClass } from "@/lib/graduation";
 import { useAuth } from "./AuthProvider";
 import { Pagination } from "./Pagination";
 type ManagedMember = {
@@ -19,6 +20,8 @@ type RecordItem = {
   user_id: number | null;
   consent_confirmed: boolean;
   source_note: string;
+  hometown: string | null;
+  graduation_year: number | null;
 };
 const roles: Record<string, string> = {
   SUPER_ADMIN: "총괄 관리자",
@@ -252,6 +255,7 @@ function Directory() {
             <tr>
               <th>이름</th>
               <th>기수</th>
+              <th>명부 지역</th>
               <th>정보 제공 동의</th>
               <th>회원 연결</th>
               <th>관리</th>
@@ -261,7 +265,11 @@ function Directory() {
             {result.data?.items.map((item) => (
               <tr key={item.id}>
                 <td>{item.name}</td>
-                <td>{item.class_no}회</td>
+                <td>
+                  {item.class_no}회<br />
+                  {item.graduation_year ? `${item.graduation_year}년` : ""}
+                </td>
+                <td>{item.hometown || "미상"}</td>
                 <td>{item.consent_confirmed ? "확인" : "미확인"}</td>
                 <td>{item.user_id ? "연결됨" : "미연결"}</td>
                 <td>
@@ -317,6 +325,8 @@ function RecordEditor({ item, done }: { item?: RecordItem; done: () => void }) {
         body: JSON.stringify({
           name: form.get("name"),
           classNo: Number(form.get("classNo")),
+          hometown: String(form.get("hometown") ?? ""),
+          graduationYear: form.get("graduationYear") ? Number(form.get("graduationYear")) : null,
           sourceNote: form.get("sourceNote"),
           consentConfirmed: form.has("consentConfirmed"),
           userId: form.get("userId") ? Number(form.get("userId")) : null,
@@ -350,9 +360,20 @@ function RecordEditor({ item, done }: { item?: RecordItem; done: () => void }) {
             type="number"
             required
             min={1}
-            max={new Date().getFullYear() - 1926}
+            max={latestGraduatingClass()}
             defaultValue={item?.class_no}
           />
+        </label>
+      </div>
+      <div className="field-grid">
+        <label>
+          명부 지역
+          <input name="hometown" maxLength={80} defaultValue={item?.hometown ?? ""} />
+        </label>
+        <label>
+          졸업연도
+          <input name="graduationYear" type="number" min={1927}
+            max={new Date().getFullYear()} defaultValue={item?.graduation_year ?? ""} />
         </label>
       </div>
       <label>

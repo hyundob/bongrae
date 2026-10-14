@@ -5,6 +5,7 @@ import { UserPlus } from "lucide-react";
 import { api, Member, message, POLICY_VERSION } from "@/lib/api";
 import { useAuth } from "@/components/AuthProvider";
 import { PageShell } from "@/components/PageShell";
+import { graduationYear, latestGraduatingClass } from "@/lib/graduation";
 const provinces = [
   "서울특별시",
   "부산광역시",
@@ -166,7 +167,7 @@ export default function SignupPage() {
               >
                 <option value="">선택</option>
                 {Array.from(
-                  { length: new Date().getFullYear() - 1926 },
+                  { length: latestGraduatingClass() },
                   (_, i) => i + 1,
                 ).map((n) => (
                   <option key={n} value={n}>
@@ -179,7 +180,7 @@ export default function SignupPage() {
               졸업 연도
               <input
                 readOnly
-                value={classNo ? 1926 + Number(classNo) + "년" : ""}
+                value={classNo ? graduationYear(Number(classNo)) + "년" : ""}
               />
             </label>
           </div>

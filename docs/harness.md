@@ -5,8 +5,8 @@
 
 ## 시작
 
-로컬 준비물: Node.js 22, JDK 21 (`JAVA_HOME`), Git, Docker Engine/Compose.
-Windows는 Git Bash와 Python 3도 필요하다. Docker Desktop은 DB 통합 테스트 때 실행 중이어야 한다.
+로컬 준비물: Node.js 22, JDK 21 (`JAVA_HOME`), Python 3.11 이상, Git, Docker Engine/Compose.
+Windows는 Git Bash도 필요하다. Docker Desktop은 DB 통합 테스트 때 실행 중이어야 한다.
 Git Bash가 기본 위치에 없다면 `BASH_PATH`를 지정한다.
 
 저장소 루트에서 Windows PowerShell과 Ubuntu 모두 같은 명령을 사용한다.
@@ -26,8 +26,8 @@ Linux에서 Chromium OS 라이브러리가 없다면 프론트 폴더에서
 | --- | --- |
 | `node scripts/verify.mjs` | 아래 전체 검사 |
 | `node scripts/verify.mjs frontend` | npm ci, ESLint, 타입 검사, Next 운영 빌드, PC/모바일 Chromium 테스트 |
-| `node scripts/verify.mjs backend` | Gradle clean, 단위 테스트, PostgreSQL 통합 테스트, bootJar |
-| `node scripts/verify.mjs infra` | 변경 공백 검사, Compose 설정 검증, 배포·롤백 모의 테스트 |
+| `node scripts/verify.mjs backend` | Gradle clean, 단위 테스트, PostgreSQL 통합 테스트, bootJar, 명부 SQL 임시 DB 검사 |
+| `node scripts/verify.mjs infra` | HWPX 가상 자료 추출 검사, 변경 공백 검사, Compose 설정 검증, 배포·롤백 모의 테스트 |
 | `node scripts/verify.mjs backend-unit` | Docker 없이 단위 테스트와 bootJar만 실행; 전체 통과로 간주하지 않음 |
 
 전체 실행은 영역별 실패를 모아 종료 코드 1을 반환한다. 한 영역 내부는 첫 실패에서 멈춘다.
@@ -44,6 +44,7 @@ Docker 개발 Compose는 별도 `.next` 볼륨을 사용한다.
 - 백엔드 단위: 비밀번호 해시, 가입 즉시 MEMBER·검색 비공개, 중복 아이디·이메일, 잘못된 로그인 거부.
 - 백엔드 통합: 실제 HTTP·쿠키·CSRF와 임시 PostgreSQL로 가입·로그인·로그아웃, 동의, 이름/기수 검색과 연락처 비노출, 권한 즉시 회수, 게시글 소유권·동시 수정, 첨부파일 접근/범위 요청, 탈퇴, 총괄 관리자 유일성, 기존 DB 전환을 검사한다.
 - 인프라: 운영·개발·HTTPS 이미지 Compose 구성, 배포 성공, 앱/HTTPS 실패 시 복구, 잘못된 아카이브 거부.
+- 명부: 가상 HWPX에서 20회 이전 제외, 이름/지역 분리, 불명확 항목 보류, 명시적 정정, 동명이인 보존을 검사한다. 별도의 네트워크·호스트 포트 없는 임시 PostgreSQL에서 등록 SQL의 원자성, 반복 실행, 동의 철회 보존, 삭제 후 재등록 차단, SQL 문자열 처리를 검사한다.
 
 ESLint의 오류는 실패로 처리한다. 기존 `<img>` 최적화 권고 등 경고는 출력하며, 규칙을 끄지 않는다.
 자동 브라우저 테스트는 모의 API이며 실제 백엔드 권한은 별도 HTTP 통합 테스트가 검증한다.

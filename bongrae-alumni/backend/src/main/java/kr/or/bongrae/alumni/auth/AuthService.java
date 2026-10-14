@@ -1,7 +1,6 @@
 package kr.or.bongrae.alumni.auth;
 
 import java.nio.charset.StandardCharsets;
-import java.time.Year;
 import java.util.Locale;
 import kr.or.bongrae.alumni.member.*;
 import org.springframework.http.HttpStatus;
@@ -25,7 +24,7 @@ public class AuthService {
         if (request.password().getBytes(StandardCharsets.UTF_8).length > 72) badRequest("비밀번호는 UTF-8 기준 72바이트 이내로 입력해 주세요.");
         if (!POLICY_VERSION.equals(request.policyVersion())) badRequest("변경된 약관을 확인한 후 다시 동의해 주세요.");
         if (!request.termsAgreed() || !request.privacyAgreed() || !request.ageConfirmed()) badRequest("필수 동의 항목과 만 14세 이상 여부를 확인해 주세요.");
-        if (request.classNo() > Year.now().getValue() - 1926) badRequest("졸업 기수를 확인해 주세요.");
+        if (request.classNo() > GraduationYears.latestClass()) badRequest("졸업 기수를 확인해 주세요.");
         if (request.name().trim().length() < 2) badRequest("이름을 확인해 주세요.");
         String username = request.username().toLowerCase(Locale.ROOT);
         String email = request.email().trim().toLowerCase(Locale.ROOT);

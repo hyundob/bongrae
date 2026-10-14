@@ -5,7 +5,7 @@ export const member = {
   name: "테스트동문",
   role: "MEMBER",
   classNo: 62,
-  graduationYear: 1988,
+  graduationYear: 1989,
 };
 export const samplePost = {
   id: 21,

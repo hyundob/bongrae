@@ -6,6 +6,7 @@ import { PageShell } from "@/components/PageShell";
 import { Pagination } from "@/components/Pagination";
 import { useRemote } from "@/lib/useRemote";
 import { PageResult } from "@/lib/api";
+import { latestGraduatingClass } from "@/lib/graduation";
 type Alumni = {
   name: string;
   class_no: number;
@@ -56,7 +57,7 @@ function SearchContent() {
             type="number"
             name="classNo"
             min={1}
-            max={new Date().getFullYear() - 1926}
+            max={latestGraduatingClass()}
             placeholder="전체 기수"
           />
         </label>

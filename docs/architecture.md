@@ -25,7 +25,7 @@
 | 관리자 | backend/.../admin | 최초 SUPER_ADMIN 생성, 회원 목록, ADMIN 부여·회수 |
 | 검색 | backend/.../directory | JPA 회원 + JDBC 명부, 공개 범위 강제 |
 | 게시판 | backend/.../board | Controller/Service/JDBC Repository, 글·사진·영상 |
-| 마이그레이션 | backend/src/main/resources/db/migration | Flyway V1 회원/세션, V2 명부/게시판 |
+| 마이그레이션 | backend/src/main/resources/db/migration | Flyway V1 회원/세션, V2 명부/게시판, V3 명부 원문 정보/연도 보정, V4 등록 처리 기록 |
 | 정적 자료 API | backend/.../content | 학교·회칙 등 초기 자료 |
 | 검증 | 저장소 scripts/verify.mjs | 빌드, 단위/DB/브라우저/배포 모의 검사 |
 
@@ -61,7 +61,8 @@ SUPER_ADMIN은 DB 부분 유일 인덱스로 최대 1명, 명시적 환경변수
 
 - users: 로그인·회원정보, 역할, 동의 여부·문서 버전·일시.
 - alumni_profiles: 검색 공개 선택 및 동의 일시.
-- alumni_records: 미가입 동문 이름·기수·동의 근거, 확인 후 회원 계정 연결.
+- alumni_records: 미가입 동문 이름·기수·원문 졸업연도·명부 지역·동의 근거, 확인 후 회원 계정 연결. 명부 지역은 현재 거주지로 간주하지 않으며 관리자에게만 제공한다.
+- alumni_import_keys: 파일 내 기수·순번에 따른 등록 처리 기록. 명부가 삭제되면 연결만 비우고 기록을 남겨 재등록으로 복원되지 않도록 한다.
 - board_posts: 게시판 종류, 제목·본문, 작성자, 수정 버전.
 - board_media: 임시/게시 첨부파일, 크기/형식과 바이너리. 글당 5개, 파일당 16MB.
 - spring_session, spring_session_attributes: 서버 세션.
@@ -70,6 +71,10 @@ SUPER_ADMIN은 DB 부분 유일 인덱스로 최대 1명, 명시적 환경변수
 검색 결과는 이름/기수/졸업연도/가입 여부만 반환한다. 공개 동의 없는 회원은 제외한다.
 연결되지 않은 명부는 당사자 동의가 확인된 경우만 표시한다.
 기존 schema-draft.sql 및 seed-data.sql은 실행 마이그레이션이 아니다.
+
+졸업연도는 원문상 1회 1927년, 2회 1928년, 3회 1930년이다. 따라서 3회부터는 기수+1927로 계산하며, 가져온 명부는 문서에 적힌 졸업연도를 별도로 저장한다. V3는 기존 자동 계산값 중 1년 차이가 나는 회원 값을 보정한다. V4는 가져오기 처리 기록을 추가한다.
+
+HWPX 명부의 20회 이상 추출·검토·등록은 [명부 가져오기](roster-import.md)를 따른다. 실제 명부와 등록 SQL은 Git에 넣지 않는다.
 
 ## API
 
