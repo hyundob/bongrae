@@ -1,0 +1,38 @@
+.env
+.env.*
+!.env.example
+
+# Dependencies and build outputs
+node_modules/
+.next/
+dist/
+build/
+out/
+.gradle/
+backend/build/
+*.tsbuildinfo
+*.log
+
+# Runtime data
+uploads/*
+!uploads/.gitkeep
+backups/*.sql
+backups/*.sql.gz
+backups/*.tar.gz
+backups/*.log
+backups/*.dump
+postgres-data/
+nginx/https-active.conf
+docker-compose.override.yml
+certbot/
+*.pem
+*.key
+*.p12
+*.pfx
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml

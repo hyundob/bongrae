@@ -1,0 +1,39 @@
+server:
+  port: 8080
+  forward-headers-strategy: native
+
+spring:
+  devtools:
+    restart:
+      enabled: true
+    livereload:
+      enabled: true
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/alumni_db}
+    username: ${POSTGRES_USER:alumni_user}
+    password: ${POSTGRES_PASSWORD:change_this_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: Asia/Seoul
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+logging:
+  level:
+    kr.or.bongrae.alumni: debug
+    org.hibernate.SQL: warn
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change_this_jwt_secret}
+  upload:
+    path: ${FILE_UPLOAD_PATH:/app/uploads}

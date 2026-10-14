@@ -1,0 +1,35 @@
+server:
+  port: 8080
+  forward-headers-strategy: native
+
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres:5432/alumni_db}
+    username: ${POSTGRES_USER:alumni_user}
+    password: ${POSTGRES_PASSWORD:change_this_password}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    open-in-view: false
+    # 초기 개발 편의를 위해 update로 둔다.
+    # 운영 전에는 validate로 바꾸고 Flyway 또는 Liquibase 마이그레이션을 적용한다.
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: Asia/Seoul
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 20MB
+
+logging:
+  level:
+    org.hibernate.SQL: warn
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+  upload:
+    path: ${FILE_UPLOAD_PATH:/app/uploads}
