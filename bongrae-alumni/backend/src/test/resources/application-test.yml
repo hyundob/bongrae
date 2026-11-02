@@ -7,5 +7,7 @@ spring:
     init:
       mode: never
 app:
+  signup:
+    enabled: true
   upload:
     path: ${java.io.tmpdir}/bongrae-harness-uploads

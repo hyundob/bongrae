@@ -12,16 +12,19 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class AuthService {
-    public static final String POLICY_VERSION = "2026-10-14";
+    public static final String POLICY_VERSION = "2026-11-02";
     private final UserAccountRepository users;
     private final AlumniProfileRepository profiles;
     private final PasswordEncoder passwords;
     private final DirectoryLinkService directoryLinks;
-    public AuthService(UserAccountRepository users, AlumniProfileRepository profiles, PasswordEncoder passwords, DirectoryLinkService directoryLinks) {
-        this.users = users; this.profiles = profiles; this.passwords = passwords; this.directoryLinks = directoryLinks;
+    private final SignupAvailability signup;
+    public AuthService(UserAccountRepository users, AlumniProfileRepository profiles, PasswordEncoder passwords,
+                       DirectoryLinkService directoryLinks, SignupAvailability signup) {
+        this.users = users; this.profiles = profiles; this.passwords = passwords; this.directoryLinks = directoryLinks; this.signup = signup;
     }
     @Transactional
     public UserAccount signup(SignupRequest request) {
+        signup.requireOpen();
         if (!request.password().equals(request.passwordConfirm())) badRequest("비밀번호 확인이 일치하지 않습니다.");
         if (request.password().getBytes(StandardCharsets.UTF_8).length > 72) badRequest("비밀번호는 UTF-8 기준 72바이트 이내로 입력해 주세요.");
         if (!POLICY_VERSION.equals(request.policyVersion())) badRequest("변경된 약관을 확인한 후 다시 동의해 주세요.");

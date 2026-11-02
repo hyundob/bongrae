@@ -204,6 +204,24 @@ summary:focus-visible {
   text-underline-offset: 3px;
   color: var(--nav);
 }
+.signup-status {
+  padding: 32px 0;
+  max-width: 680px;
+}
+.signup-status h2 {
+  margin: 16px 0;
+  font-size: 24px;
+  line-height: 1.5;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+.signup-status p {
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+}
+.signup-status .actions {
+  margin-top: 24px;
+}
 .action {
   display: inline-flex;
   align-items: center;

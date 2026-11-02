@@ -18,7 +18,17 @@ class AuthServiceTest {
     @Mock kr.or.bongrae.alumni.directory.DirectoryLinkService directoryLinks;
     private final BCryptPasswordEncoder passwords=new BCryptPasswordEncoder(4);
     private AuthService service;
-    @BeforeEach void setup(){service=new AuthService(users,profiles,passwords,directoryLinks);}
+    @BeforeEach void setup(){service=new AuthService(users,profiles,passwords,directoryLinks,new SignupAvailability(true));}
+    @Test void pausedSignupCannotReadWriteOrLinkAnyAccount(){
+        var paused=new AuthService(users,profiles,passwords,directoryLinks,new SignupAvailability(false));
+        assertThatThrownBy(()->paused.signup(request())).isInstanceOfSatisfying(SignupAvailability.ClosedException.class,
+            error->assertThat(error.getStatusCode().value()).isEqualTo(503));
+        verifyNoInteractions(users,profiles,directoryLinks);
+    }
+    @Test void registrationStatusReflectsTheConfiguredFlag(){
+        assertThat(new SignupAvailability(false).status()).isEqualTo(new SignupAvailability.Status(false,SignupAvailability.MESSAGE));
+        assertThat(new SignupAvailability(true).status()).isEqualTo(new SignupAvailability.Status(true,""));
+    }
     @Test void signupHashesPasswordAndKeepsDirectoryPrivate(){
         var user=service.signup(request());
         verify(users).saveAndFlush(user);

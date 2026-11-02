@@ -33,5 +33,7 @@ logging:
     org.hibernate.SQL: warn
 
 app:
+  signup:
+    enabled: true
   upload:
     path: ${FILE_UPLOAD_PATH:/app/uploads}

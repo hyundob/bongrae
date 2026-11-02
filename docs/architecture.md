@@ -19,7 +19,7 @@
 | 페이지 | frontend/src/app | 소개·학교 자료, 가입·로그인·내 정보, 검색, 게시판, 관리자, 약관 |
 | 공통 UI | frontend/src/components | AuthProvider, PageShell, BoardPage, AdminWorkspace, HomePosts |
 | API 클라이언트 | frontend/src/lib/api.ts, useRemote.ts | 세션/CSRF 요청, 오류 처리, 목록 조회 |
-| 인증 | backend/.../auth | 가입, 로그인, CSRF, 현재 회원 |
+| 인증 | backend/.../auth | 가입 가능 상태, 가입, 로그인, CSRF, 현재 회원 |
 | 접근 정책 | backend/.../config | Spring Security, 매 요청 DB 권한 갱신 |
 | 회원 | backend/.../member | 회원·프로필 JPA, 선택 동의, 탈퇴 |
 | 관리자 | backend/.../admin | 최초 SUPER_ADMIN 생성, 회원 목록, ADMIN 부여·회수 |
@@ -56,6 +56,7 @@
 | ADMIN 지정·회수 | 불가 | 불가 | 불가 | 허용 |
 
 신규 회원은 바로 MEMBER이다. GUEST는 로그인 대상이 아니며 기존 PENDING은 로그인 회원으로 처리한다.
+가입이 열려 있을 때만 신규 계정을 생성한다. `app.signup.enabled` 기본값과 prod 설정은 false, dev/test는 true다. 가입 차단은 AuthService에서도 강제하며 기존 로그인·관리자 초기화·권한에는 적용하지 않는다.
 SUPER_ADMIN은 DB 부분 유일 인덱스로 최대 1명, 명시적 환경변수로 초기화한다.
 모든 쓰기는 세션과 CSRF 검사 후 서비스에서 권한·소유권을 확인한다.
 
@@ -89,10 +90,11 @@ HWPX 명부의 20회 이상 추출·검토·등록은 [명부 가져오기](rost
 - 가입, 연결 확인, 기존 명부 수정·삭제, 탈퇴는 명부 가져오기와 같은 DB 테이블 잠금을 사용해 쓰기를 짧게 직렬화한다. 한 명부/계정의 중복 연결, 승인 시점의 후보 변경 및 재처리를 거부한다.
 - 기존 동문 명부 화면의 수동 연결·해제도 확인 상태와 감사 기록에 반영한다. 이미 다른 회원과 연결된 명부를 바꾸려면 먼저 기존 연결을 해제해야 한다.
 - 이름·기수 매칭은 실명/휴대전화 본인인증이 아니다. 공개 동의나 권한을 변경하지 않으며 가입 응답에 후보 명부를 공개하지 않는다. 미확인 동명이인의 가입 계정과 명부는 연결 전 각각 검색에 보일 수 있다.
+- 회원 탈퇴 시 원본 명부와 가져오기 처리 기록은 삭제하지 않는다. 연결된 명부의 user_id를 비우고 consent_confirmed를 false로 바꿔 자동 재공개를 막는다. 회원 계정·프로필·세션·해당 연결 확인 기록은 삭제한다. 명부의 별도 보유 근거와 기간은 운영자가 확정해야 하며 실제 삭제·동의 재확인은 기존 관리자 명부 관리로 처리한다.
 
 ## API
 
-- GET /api/auth/csrf, /api/auth/me
+- GET /api/auth/csrf, /api/auth/me, /api/auth/registration (가입 가능 상태; 공개·no-store)
 - POST /api/auth/signup, /api/auth/login, /api/auth/logout
 - GET /api/account, PATCH /api/account/preferences, DELETE /api/account
 - GET /api/alumni?name=&classNo=&page=
@@ -108,6 +110,8 @@ board는 announcements, events, gallery, affairs, free 중 하나이다.
 오류는 HTTP 상태와 message를 반환한다.
 
 ## 남은 운영 준비
+
+2026-11-02부터 운영 사이트의 신규 회원가입은 Nginx에서 임시 차단 중이다. 코드 기반 차단은 승인된 push와 자동 배포가 확인된 뒤 전환하며, 그 전에는 운영 차단을 제거하지 않는다. 백업 위치·범위와 전환·재개 절차는 [운영 작업 기록](operations-status.md)을 따른다.
 
 장학사업은 추진 중, SMS/이메일 발송은 미구현이다. 비밀번호 재설정·연락처 본인확인·댓글은 이번 범위에 없다.
 개인정보 담당자 및 문의처가 미정이며 법적 문안과 실제 위탁/보유 정책 확정이 필요하다.

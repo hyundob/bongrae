@@ -12,6 +12,8 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.CacheControl;
+import org.springframework.http.ResponseEntity;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -20,9 +22,19 @@ public class AuthController {
     private final CurrentUser current;
     private final SecurityContextRepository contexts;
     private final SessionAuthenticationStrategy sessions;
+    private final SignupAvailability signup;
     public AuthController(AuthService service, CurrentUser current, SecurityContextRepository contexts,
-                          SessionAuthenticationStrategy sessions) {
-        this.service = service; this.current = current; this.contexts = contexts; this.sessions = sessions;
+                          SessionAuthenticationStrategy sessions, SignupAvailability signup) {
+        this.service = service; this.current = current; this.contexts = contexts; this.sessions = sessions; this.signup = signup;
+    }
+    @GetMapping("/registration")
+    public ResponseEntity<SignupAvailability.Status> registration() {
+        return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(signup.status());
+    }
+    @ExceptionHandler(SignupAvailability.ClosedException.class)
+    public ResponseEntity<Map<String,String>> signupClosed() {
+        return ResponseEntity.status(503).cacheControl(CacheControl.noStore())
+            .body(Map.of("code","SIGNUP_PAUSED","message",SignupAvailability.MESSAGE));
     }
     @GetMapping("/csrf")
     public Map<String, String> csrf(CsrfToken token) {

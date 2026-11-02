@@ -85,6 +85,10 @@ class AuthIntegrationTest {
 
     @Test void signupSessionLoginLogoutAndPasswordHash() throws Exception {
         var browser=new Browser();
+        var registration=browser.get("/api/auth/registration");
+        assertThat(registration.statusCode()).isEqualTo(200);
+        assertThat(tree(registration).get("enabled").asBoolean()).isTrue();
+        assertThat(registration.headers().firstValue("cache-control").orElse("")).contains("no-store");
         browser.signup("member62",false);
         var user=users.findByUsername("member62").orElseThrow();
         assertThat(user.getRole()).isEqualTo(MemberRole.MEMBER);
@@ -370,6 +374,27 @@ class AuthIntegrationTest {
         assertThat(browser.get("/api/auth/me").statusCode()).isEqualTo(401);
         assertThat(users.count()).isZero(); assertThat(profiles.count()).isZero();
         assertThat(tree(new Browser().get("/api/boards/free/posts/"+postId)).get("author_name").asText()).isEqualTo("탈퇴 회원");
+    }
+    @Test void withdrawalPreservesSourceRosterAndImportReceiptWithoutRepublishingIt() throws Exception {
+        long id=roster("테스트동문",62,"가상마을");
+        db.update("UPDATE alumni_records SET source_key=? WHERE id=?","synthetic:62:0001",id);
+        db.update("INSERT INTO alumni_import_keys(source_key,record_id) VALUES (?,?)","synthetic:62:0001",id);
+        var browser=new Browser(); browser.signup("member62",true);
+        var before=new HashMap<>(db.queryForMap("SELECT * FROM alumni_records WHERE id=?",id));
+        assertThat(browser.send("DELETE","/api/account",Map.of("password","wrong")).statusCode()).isEqualTo(400);
+        assertThat(db.queryForMap("SELECT * FROM alumni_records WHERE id=?",id)).isEqualTo(before);
+        assertThat(browser.send("DELETE","/api/account",Map.of("password",PASSWORD)).statusCode()).isEqualTo(204);
+        assertThat(db.queryForObject("SELECT count(*) FROM alumni_records WHERE id=?",Long.class,id)).isEqualTo(1);
+        before.put("user_id",null); before.put("consent_confirmed",false);
+        assertThat(db.queryForMap("SELECT * FROM alumni_records WHERE id=?",id)).isEqualTo(before);
+        assertThat(db.queryForObject("SELECT record_id FROM alumni_import_keys WHERE source_key=?",Long.class,"synthetic:62:0001")).isEqualTo(id);
+        assertThat(browser.get("/api/auth/me").statusCode()).isEqualTo(401);
+        assertThat(users.count()).isZero(); assertThat(profiles.count()).isZero();
+        seed("editor",MemberRole.ADMIN); var admin=new Browser(); admin.login("editor");
+        assertThat(tree(admin.get("/api/alumni?classNo=62")).get("total").asInt()).isZero();
+        assertThat(tree(admin.get("/api/admin/directory?classNo=62")).get("total").asInt()).isEqualTo(1);
+        assertThat(admin.send("DELETE","/api/admin/directory/"+id,null).statusCode()).isEqualTo(204);
+        assertThat(db.queryForObject("SELECT record_id FROM alumni_import_keys WHERE source_key=?",Long.class,"synthetic:62:0001")).isNull();
     }
     @Test void uploadsArePrivateUntilPublishedAndCannotBeStolen() throws Exception {
         var author=new Browser(); author.signup("member62",false);

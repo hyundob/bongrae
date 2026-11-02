@@ -29,6 +29,8 @@ export async function mockApi(page: Page, user: typeof member | null = null) {
       return route.fulfill({
         json: { token: "test-csrf", headerName: "X-CSRF-TOKEN" },
       });
+    if (path === "/api/auth/registration")
+      return route.fulfill({ json: { enabled: true, message: "" } });
     if (path === "/api/account")
       return route.fulfill({
         json: {

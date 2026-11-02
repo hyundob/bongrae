@@ -1,8 +1,10 @@
 "use client";
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { UserPlus } from "lucide-react";
-import { api, Member, message, POLICY_VERSION } from "@/lib/api";
+import { ArrowLeft, CirclePause, LogIn, RotateCw, UserPlus } from "lucide-react";
+import { api, ApiError, Member, message, POLICY_VERSION } from "@/lib/api";
+import { useRemote } from "@/lib/useRemote";
 import { useAuth } from "@/components/AuthProvider";
 import { PageShell } from "@/components/PageShell";
 import { graduationYear, latestGraduatingClass } from "@/lib/graduation";
@@ -29,11 +31,14 @@ const provinces = [
 export default function SignupPage() {
   const router = useRouter();
   const { setUser, loading } = useAuth();
+  const registration = useRemote<{ enabled: boolean; message: string }>("/api/auth/registration");
+  const [pausedMessage, setPausedMessage] = useState("");
   const [classNo, setClassNo] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (loading || busy || registration.data?.enabled !== true || pausedMessage) return;
     setError("");
     const form = new FormData(event.currentTarget);
     if (form.get("password") !== form.get("passwordConfirm")) {
@@ -62,15 +67,36 @@ export default function SignupPage() {
       );
       router.replace("/account");
     } catch (e) {
-      setError(message(e));
+      if (e instanceof ApiError && e.code === "SIGNUP_PAUSED") setPausedMessage(e.message);
+      else setError(message(e));
     } finally {
       setBusy(false);
     }
   }
   return (
     <PageShell title="회원가입">
+      {registration.loading ? (
+        <p className="signup-status" role="status">가입 가능 여부를 확인하고 있습니다.</p>
+      ) : registration.error || typeof registration.data?.enabled !== "boolean" ? (
+        <section className="signup-status" aria-label="가입 상태 확인 오류">
+          <p className="form-error" role="alert">가입 가능 여부를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.</p>
+          <button type="button" className="action secondary" onClick={registration.reload}>
+            <RotateCw size={18} /> 다시 확인
+          </button>
+        </section>
+      ) : !registration.data.enabled || pausedMessage ? (
+        <section className="signup-status" aria-labelledby="signup-paused-title" role="status">
+          <CirclePause size={28} aria-hidden="true" />
+          <h2 id="signup-paused-title">회원가입을 잠시 중단했습니다.</h2>
+          <p>{pausedMessage || registration.data.message || "운영 준비가 완료되면 다시 안내드리겠습니다."}</p>
+          <div className="actions">
+            <Link className="action secondary" href="/"><ArrowLeft size={18} /> 홈으로</Link>
+            <Link className="action secondary" href="/login"><LogIn size={18} /> 로그인</Link>
+          </div>
+        </section>
+      ) : (
       <form className="member-form" onSubmit={submit} method="post">
-        <fieldset className="form-fields" disabled={loading}>
+        <fieldset className="form-fields" disabled={loading || busy}>
           <h2>기본 정보</h2>
           <div className="field-grid">
             <label>
@@ -234,6 +260,7 @@ export default function SignupPage() {
           </div>
         </fieldset>
       </form>
+      )}
     </PageShell>
   );
 }

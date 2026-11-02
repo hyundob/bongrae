@@ -17,6 +17,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
+    public code?: string,
   ) {
     super(message);
   }
@@ -53,6 +54,7 @@ export async function api<T>(
     throw new ApiError(
       body.message ?? "요청을 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.",
       response.status,
+      body.code,
     );
   }
   return response.status === 204 ? (undefined as T) : response.json();
@@ -62,7 +64,7 @@ export function message(error: unknown) {
 }
 export const isAdmin = (user: Member | null) =>
   !!user && ["ADMIN", "SUPER_ADMIN"].includes(user.role);
-export const POLICY_VERSION = "2026-10-14";
+export const POLICY_VERSION = "2026-11-02";
 export const boardNames: Record<string, string> = {
   announcements: "공지사항",
   events: "행사 안내",

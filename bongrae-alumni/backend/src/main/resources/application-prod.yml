@@ -31,5 +31,8 @@ logging:
     org.hibernate.SQL: warn
 
 app:
+  signup:
+    # Enrollment changes are reviewed in Git and delivered by image deployment.
+    enabled: false
   upload:
     path: ${FILE_UPLOAD_PATH:/app/uploads}

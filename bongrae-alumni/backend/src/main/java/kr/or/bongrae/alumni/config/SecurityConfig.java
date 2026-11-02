@@ -33,7 +33,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.csrfTokenRepository(csrfTokens))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/error").permitAll()
-                .requestMatchers(HttpMethod.GET, "/api/auth/csrf", "/api/health", "/api/sample", "/api/site-info",
+                .requestMatchers(HttpMethod.GET, "/api/auth/csrf", "/api/auth/registration", "/api/health", "/api/sample", "/api/site-info",
                     "/api/executives", "/api/rules", "/api/school/history", "/api/boards", "/api/boards/**",
                     "/api/media/**", "/actuator/health").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/auth/signup", "/api/auth/login").permitAll()

@@ -1,7 +1,7 @@
 import { expect, test } from "@playwright/test";
 import { member, mockApi, samplePost } from "./fixtures";
 
-test("auth forms cannot submit before hydration", async ({
+test("auth forms cannot submit before hydration or signup status confirmation", async ({
   browser,
   baseURL,
 }) => {
@@ -11,16 +11,13 @@ test("auth forms cannot submit before hydration", async ({
   });
   try {
     const page = await context.newPage();
-    for (const [path, name] of [
-      ["/signup", "회원가입"],
-      ["/login", "로그인"],
-    ]) {
-      await page.goto(path);
-      await expect(page.locator("input[name=username]")).toBeDisabled();
-      await expect(
-        page.getByRole("button", { name, exact: true }),
-      ).toBeDisabled();
-    }
+    await page.goto("/signup");
+    await expect(page.locator("input[name=username]")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "회원가입", exact: true })).toHaveCount(0);
+    await expect(page.getByText("가입 가능 여부를 확인하고 있습니다.")).toBeVisible();
+    await page.goto("/login");
+    await expect(page.locator("input[name=username]")).toBeDisabled();
+    await expect(page.getByRole("button", { name: "로그인", exact: true })).toBeDisabled();
   } finally {
     await context.close();
   }
@@ -82,7 +79,7 @@ test("signup opens policies in new tabs and submits explicit consents", async ({
     smsAgreed: false,
     emailAgreed: false,
     ageConfirmed: true,
-    policyVersion: "2026-10-14",
+    policyVersion: "2026-11-02",
   });
   expect(page.url()).not.toContain("password");
 });
