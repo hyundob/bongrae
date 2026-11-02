@@ -16,22 +16,19 @@
 - 신규 게시판 첨부파일은 DB에 포함된다. `.env`, SSH 개인키, TLS 인증서 키, Docker 이미지 및 전체 서버 설정은 포함하지 않는다. 완전한 서버 복구 이미지나 자동 정기 백업은 아니다.
 - 서버에서 `pg_restore --file=/dev/null`로 덤프 전체를 읽고 tar 목록을 검증했다. PC 사본의 SHA-256은 서버 원본과 일치한다. 별도 DB로 실제 복원하는 리허설은 수행하지 않았다.
 
-### 코드 기반 차단으로 전환 (배포 승인 대기)
+### 회원가입 재개 승인 및 적용 절차
 
-1. 현재 Nginx 차단과 백업을 그대로 유지한 상태에서 로컬 코드·검증을 마친다.
-2. 사용자 승인 후 GitHub main에 push하고 해당 커밋의 자동 검증·배포 성공을 확인한다. 이 코드에서는 prod의 app.signup.enabled=false이므로 새 백엔드도 가입을 차단한다.
-3. 운영 `/api/health` 정상 응답, 신규 `/api/auth/registration`의 enabled=false와 no-store, 배포 이미지 리비전을 확인한다. `/api/auth/registration`은 현재 Nginx 가입 차단 블록과 경로가 달라 먼저 확인할 수 있다.
-4. 당시 Nginx 설정을 별도로 백업하고 아래 표식 블록만 제거한 뒤 nginx -t가 성공할 때만 reload한다. 기존 원본 전체 파일을 덮어쓰지 않는다. 이 1회 인계는 서버 설정 작업이며 이미지 배포만으로 자동 실행되지 않는다.
-5. 앱의 `/signup` 화면에서 중단 안내가 표시되고 상태 조회가 false인 것을 확인한다. 프론트·백엔드 검증에서는 유효한 가입 요청의 503/SIGNUP_PAUSED 차단까지 확인한다. 홈페이지·로그인 경로도 재확인한다. 실패 시 즉시 보관한 Nginx 차단을 복구한다.
+- 가입 중지 기능과 탈퇴 시 명부 보호는 커밋 `1850344`의 자동 검증·배포가 완료됐다. Nginx 임시 차단은 별도로 유지됐다.
+- 2026-11-02 사용자가 문의처 정리를 보류하고 회원가입 재개를 승인했다. 이 변경은 prod의 `app.signup.enabled=true`만 적용하며 문의처·약관·동의 버전·권한·DB 구조는 변경하지 않는다. 아래 절차 완료 전에는 운영 재개로 간주하지 않는다.
 
-아직 이 전환을 운영에 적용하지 않았다. 이후 중지·재개는 application-prod.yml의 app.signup.enabled를 변경하는 코드 검토와 승인된 push로 처리한다. 회원가입 재개를 위해 Nginx를 다시 수정하지 않는다.
+1. 기존 Nginx 차단과 백업을 유지한 채 로컬 검증을 마친다. 가입 허용·중지 및 기존 로그인·권한 검사는 임시 DB에서 수행한다.
+2. GitHub main에 push하고 해당 커밋의 자동 검증·배포 성공을 확인한다. 실패하면 Nginx 임시 차단을 제거하지 않는다.
+3. 운영 `/api/health` 정상 응답, `/api/auth/registration`의 enabled=true와 no-store, 배포 이미지 리비전 일치를 확인한다. 이때 `/signup`은 아직 Nginx 차단 상태여야 한다.
+4. 당시 서버의 `/home/ubuntu/bongrae-alumni/nginx/site-locations.conf`를 별도 백업한다. `BEGIN/END BONGRAE SIGNUP PAUSE 2026-11-02` 표식이 각각 1개인지 확인하고 그 블록만 제거한다. 과거 전체 파일로 덮어쓰지 않으며 파일 바인드 마운트가 유지되도록 기존 파일에 반영한다.
+5. `sudo docker exec bongrae-nginx nginx -t`가 성공할 때만 `sudo docker exec bongrae-nginx nginx -s reload`를 실행한다. 실패하면 이번 백업으로 즉시 복원한다. 이미지 배포만으로 이 서버 설정 작업은 실행되지 않는다.
+6. Cloudflare를 경유하는 HTTPS에서 가입 화면의 폼, 가입 가능 상태, 홈페이지·로그인·상태 확인 경로를 점검한다. 운영에 테스트 계정을 만들거나 운영 DB를 통합 테스트에 사용하지 않는다. 이상이 있으면 백업한 차단 설정을 복원하고 문법 검사 후 reload한다.
 
-### 기존 임시 차단 블록 제거 참고
-
-1. 위 코드 기반 차단의 배포 확인 후에만 진행한다. 새 코드 배포 없이 제거하면 기존 가입 기능이 열리므로 제거하지 않는다.
-2. 당시 서버 설정을 별도로 백업하고 위 BEGIN/END 표식 사이의 가입 차단 블록만 제거한다. 과거 전체 파일을 그대로 덮어써 후속 변경을 지우지 않는다.
-3. `sudo docker exec bongrae-nginx nginx -t`가 성공한 경우에만 `sudo docker exec bongrae-nginx nginx -s reload`를 실행한다.
-4. 앱의 가입 중단 안내, 가입 가능 상태와 API 차단, 홈페이지·로그인·관리자 권한을 점검한다. 문법 검사가 실패하면 원래 설정으로 복구하고 reload하지 않는다.
+이 1회 차단 제거 후에는 `application-prod.yml`의 `app.signup.enabled`를 변경하는 코드 검토와 승인된 push로 중지·재개한다. 백업은 유지하며 Cloudflare SSL/TLS·방화벽·문의처 설정은 이번 재개 범위에 포함하지 않는다.
 
 ### 별도 확인된 기존 문제
 

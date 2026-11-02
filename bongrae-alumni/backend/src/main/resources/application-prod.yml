@@ -33,6 +33,6 @@ logging:
 app:
   signup:
     # Enrollment changes are reviewed in Git and delivered by image deployment.
-    enabled: false
+    enabled: true
   upload:
     path: ${FILE_UPLOAD_PATH:/app/uploads}
